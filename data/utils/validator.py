@@ -27,3 +27,11 @@ def access_level_validator(access_level):
             raise InvalidParameter(
                 "access_level is invalid.")
     return access_level
+
+
+def body_validator(data, serializer):
+    body_serialized = serializer(data=data)
+    if not body_serialized.is_valid():
+        message = body_serialized.errors
+        raise InvalidParameter(message)
+    return body_serialized.data
