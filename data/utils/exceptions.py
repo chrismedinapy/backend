@@ -40,3 +40,19 @@ class InvalidParameter(Exception):
         self.status_code = 400
         self.message = message
         super().__init__(self.message)
+
+
+class InvalidToken(Exception):
+    def __init__(self, message="Invalid Token format"):
+        self.error_code = ErrorCode.INVALID_TOKEN
+        self.status_code = 401
+        self.message = message
+        super().__init__(self.message)
+        
+
+class ExpiredToken(Exception):
+    def __init__(self, message="Token expired"):
+        self.error_code = ErrorCode.INVALID_TOKEN
+        self.status_code = 401
+        self.message = message
+        super().__init__(self.message)

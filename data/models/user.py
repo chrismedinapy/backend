@@ -5,7 +5,7 @@ from data.manager import user_login
 from data.models.update_created import UpdatedCreated
 
 
-class UserLogin(UpdatedCreated):
+class User(UpdatedCreated):
     user_login_code = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False)
     username = models.CharField(max_length=50, unique=True)

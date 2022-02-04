@@ -2,7 +2,7 @@ import jwt
 from rest_framework.authentication import BaseAuthentication
 
 from data.utils import exceptions
-from core import settings
+from decouple import config
 
 
 class CoreAuthentication(BaseAuthentication):
@@ -16,9 +16,9 @@ class CoreAuthentication(BaseAuthentication):
         try:
             access_token = authorization_header.replace('Bearer ', '')
             payload = jwt.decode(
-                access_token, settings.SECRET_KEY, algorithms=['HS256'])
+                access_token, config("SECRET_KEY"), algorithms=config("ALGORITHM"))
             return (payload, None)
         except jwt.ExpiredSignatureError:
-            raise exceptions.TokenExpired()
+            raise exceptions.ExpiredToken()
         except (jwt.InvalidSignatureError, jwt.DecodeError):
             raise exceptions.InvalidToken()

@@ -9,6 +9,10 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
+# import os
+# os.environ.setdefault("DJANGO_SETTINGS_MODULE", __file__)
+# import django
+# django.setup()
 from decouple import config
 from pathlib import Path
 
@@ -41,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'data',
     'middleware',
+    'rest_framework_swagger',
 ]
 
 MIDDLEWARE = [
@@ -51,18 +56,19 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'middleware.errors.error_handler.CoreErrorMiddleware'
+    'middleware.errors.error_handler.CoreErrorMiddleware',
 ]
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
     # 'DEFAULT_PERMISSION_CLASSES': [
     # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    'DEFAULT_AUTHENTICATION_CLASES': (
+    'DEFAULT_AUTHENTICATION_CLASSES': (
         'middleware.security.authentication.CoreAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'middleware.security.permission.CorePermission',
+        'rest_framework.permissions.AllowAny',
     )
 
 }

@@ -1,4 +1,5 @@
 import re
+import uuid
 from data.utils.constant import AccessLevel
 from data.utils.exceptions import InvalidParameter
 
@@ -35,3 +36,10 @@ def body_validator(data, serializer):
         message = body_serialized.errors
         raise InvalidParameter(message)
     return body_serialized.data
+
+def uuid_validator(value):
+    try:
+        uuid.UUID(value)
+    except ValueError:
+        raise InvalidParameter(
+            "uuid is invalid.")

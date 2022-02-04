@@ -1,2 +1,2 @@
-from .user_login import UserLogin
+from .user import User
 from .update_created import UpdatedCreated
