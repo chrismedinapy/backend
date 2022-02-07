@@ -33,3 +33,7 @@ db.sqlite3
 *.log
 # Enviroment Variables
 .env
+# Files folder
+./files/**
+/files/
+**/files/**
