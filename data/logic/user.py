@@ -1,9 +1,11 @@
+import jwt
+from decouple import config
 from data import models
 from data.serializers.user_login import UserUuidSerializer
 from data.utils.constant import AccessLevel, Status
 from data.utils.encryptor import Encryptor
-from data.utils.exceptions import EntityNotFound
-from data.utils.validator import body_validator
+from data.utils.exceptions import EntityNotFound, UnauthorizedEntity
+from data.utils.validator import body_validator, uuid_validator
 
 
 class UserLogic():
@@ -31,9 +33,33 @@ class UserLogic():
         return user_login_data
 
     def get_by_user_code(self, user_code):
-        body_validator(user_code, UserUuidSerializer)
+        uuid_validator(user_code)
         user = models.User.objects.get_user_by_code(user_code)
         if not user:
             raise EntityNotFound(
                 f"User with code: {user_code} not found"
+            )
+
+    def update(self, user_code, user_data, user_token):
+        user = models.User.objects.get_user_by_code(user_code)
+        if __verify_ownership(user_code, user_token):
+            user.username = user_data.get("username")
+            user.name = user_data.get("name")
+            user.phone_number = user_data.get("phone_number")
+            user.email = user_data.get("email")
+            password = user_data.get("password")
+            encrypted_password = Encryptor.md5_encryption(password)
+            user.password = encrypted_password
+            updated_user = models.User.objects.save(user)
+            return updated_user
+
+    def __verify_ownership(self, user_code, token):
+        uuid_validator(user_code)
+        token_payload = jwt.decode(
+            token, config("SECRET_KEY"), algorithms=config("ALGORITHM"))
+        if token_payload.get("user_code") == user_code:
+            return True
+        else:
+            raise UnauthorizedEntity(
+                f"You do not have the privilege to update this user "
             )

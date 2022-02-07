@@ -1,3 +1,6 @@
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
@@ -15,10 +18,14 @@ class ProductViewClass(ViewSet):
 
         return Response(status=status.HTTP_201_CREATED)
 
+    @method_decorator(cache_page(60*60*2))
+    @method_decorator(vary_on_cookie)
     def get_products(self, request):
         product_list = self.product_logic.get_products()
         return Response(product_list, status=status.HTTP_200_OK)
 
+    @method_decorator(cache_page(60*60*2))
+    @method_decorator(vary_on_cookie)
     def get_product(self, request, product_code):
         uuid_validator(product_code)
         product = self.product_logic.get_product_by_code(product_code)

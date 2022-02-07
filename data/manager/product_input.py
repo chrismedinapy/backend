@@ -1,20 +1,21 @@
-from django.db import IntegrityError, models
+from django.db import models, IntegrityError
 from data.utils.constant import Status
 from data.utils.exceptions import DuplicatedRecord, InvalidOperation
 
 
-class ProductQuerySet(models.QuerySet):
+
+class ProductInputQuerySet(models.QuerySet):
     def get_all(self):
-        return self.filter(status=Status.ACTIVE.value)
+        return self.filter(status=Status.Active.value)
 
-    def get_by_product_code(self, product_code):
-        return self.filter(status=Status.ACTIVE.value, product_code=product_code).first()
+    def get_by_code(self, product_input_code):
+        return self.filter(status=Status.Active.value, product_input_code=product_input_code)
 
 
-class ProductManager(models.Manager):
+class ProductInputManager(models.Manager):
 
     def get_queryset(self):
-        return ProductQuerySet(self.model, using=self._db)
+        return ProductInputQuerySet(self.model, using=self._db)
 
     def save(self, product):
         try:

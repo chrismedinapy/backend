@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 # os.environ.setdefault("DJANGO_SETTINGS_MODULE", __file__)
 # import django
 # django.setup()
+import os
 from decouple import config
 from pathlib import Path
 
@@ -27,6 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
+#DEBUG = False
 DEBUG = config("DEBUG")
 
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=lambda v: [
@@ -45,7 +47,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'data',
     'middleware',
-    'rest_framework_swagger',
 ]
 
 MIDDLEWARE = [
@@ -69,9 +70,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'middleware.security.permission.CorePermission',
         'rest_framework.permissions.AllowAny',
-    )
-
+    ),
 }
+
 ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [
@@ -96,13 +97,38 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-DATABASES = {
+# DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': BASE_DIR / 'db.sqlite3',
+#    }
+# }
+REDIS_PASSWORD=config("REDIS_PASSWORD")
+REDIS_HOST=config("REDIS_HOST")
+REDIS_PORT=config("REDIS_PORT")
+CACHES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        #'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}',
+        'LOCATION': f'redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}',
     }
 }
 
+REST_FRAMEWORK_EXTENSIONS = {
+             # El tiempo de vencimiento es en segundos
+    'DEFAULT_CACHE_RESPONSE_TIMEOUT':60*60*2
+}
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': config("POSTGRES_DB"),
+        'USER': config("POSTGRES_USER"),
+        'PASSWORD': config("POSTGRES_PASSWORD"),
+        'HOST': config("POSTGRES_HOST"),
+        'PORT': config("POSTGRES_PORT"),
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -139,6 +165,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATIC_URL = 'static/'
+FILES_ROOT = os.path.join(BASE_DIR, 'files')
+FILES_URL = '/files/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

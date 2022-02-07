@@ -1,7 +1,7 @@
 import re
 import uuid
 from data.utils.constant import AccessLevel
-from data.utils.exceptions import InvalidParameter
+from data.utils.exceptions import FileNotSupported, InvalidParameter
 
 
 def password_validator(password):
@@ -43,3 +43,9 @@ def uuid_validator(value):
     except ValueError:
         raise InvalidParameter(
             "uuid is invalid.")
+
+def csv_validator(file):
+    if not file:
+        raise InvalidParameter("file is required.")
+    elif file.content_type not in ['text/csv' ]:
+        raise FileNotSupported(f"file: {file.name} format is not supported.")

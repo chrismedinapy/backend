@@ -8,6 +8,14 @@ class ErrorCode:
     USED_INVITATION = 6
     MEMBERS_EXCEEDED = 7
     NOT_THE_OWNER = 8
+    FILE_NOT_SUPPORTED = 9
+
+class UnauthorizedEntity(Exception):
+    def __init__(self, message = 'You are not the owner!'):
+        self.error_code = ErrorCode.UNAUTHORIZED
+        self.status_code = 401
+        self.message = message
+        super().__init__(self.message)
 
 
 class EntityNotFound(Exception):
@@ -54,5 +62,12 @@ class ExpiredToken(Exception):
     def __init__(self, message="Token expired"):
         self.error_code = ErrorCode.INVALID_TOKEN
         self.status_code = 401
+        self.message = message
+        super().__init__(self.message)
+
+class FileNotSupported(Exception):
+    def __init__(self, message='File is not supported'):
+        self.error_code = ErrorCode.FILE_NOT_SUPPORTED
+        self.status_code = 415
         self.message = message
         super().__init__(self.message)
