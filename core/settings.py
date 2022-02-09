@@ -126,6 +126,7 @@ DATABASES = {
         'USER': config("POSTGRES_USER"),
         'PASSWORD': config("POSTGRES_PASSWORD"),
         'HOST': config("POSTGRES_HOST"),
+        #'HOST':"localhost",
         'PORT': config("POSTGRES_PORT"),
     }
 }
@@ -166,7 +167,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 FILES_ROOT = os.path.join(BASE_DIR, 'files')
-FILES_URL = '/files/'
+
+if not os.path.exists(FILES_ROOT):
+    os.makedirs(FILES_ROOT)
+
+FILES_URL = 'files/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

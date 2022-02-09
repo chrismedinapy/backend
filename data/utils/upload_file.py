@@ -6,7 +6,7 @@ def upload_file_to_local(file, directory):
     """
     if not os.path.exists(directory):
         os.makedirs(directory)
-    with open(f'{directory}\\{file.name}', 'wb+') as destination:
+    with open(f'{directory}/{file.name}', 'wb+') as destination:
         for chunk in file.chunks():
             destination.write(chunk)
-    return (f"{directory}\\{file.name}")
+    return (f"{directory}/{file.name}")

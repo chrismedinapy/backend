@@ -4,18 +4,18 @@ from data.utils.exceptions import DuplicatedRecord, InvalidOperation
 
 
 
-class ProductInputQuerySet(models.QuerySet):
+class CustomerInputQuerySet(models.QuerySet):
     def get_all(self):
         return self.filter(status=Status.Active.value)
 
-    def get_by_code(self, product_input_code):
-        return self.filter(status=Status.Active.value, product_input_code=product_input_code)
+    def get_by_code(self, customer_input_code):
+        return self.filter(status=Status.Active.value, customer_input_code=customer_input_code)
 
 
-class ProductInputManager(models.Manager):
+class CustomerInputManager(models.Manager):
 
     def get_queryset(self):
-        return ProductInputQuerySet(self.model, using=self._db)
+        return CustomerInputQuerySet(self.model, using=self._db)
 
     def save(self, product):
         try:

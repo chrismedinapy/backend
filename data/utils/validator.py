@@ -45,7 +45,10 @@ def uuid_validator(value):
             "uuid is invalid.")
 
 def csv_validator(file):
-    if not file:
-        raise InvalidParameter("file is required.")
-    elif file.content_type not in ['text/csv' ]:
-        raise FileNotSupported(f"file: {file.name} format is not supported.")
+    try:
+        if not file:
+            raise InvalidParameter("File is required.")
+        elif file.content_type not in ['text/csv' ]:
+            raise FileNotSupported(f"File: {file.name} format is not supported.")
+    except:
+        raise FileNotSupported(f"Format is not supported.")

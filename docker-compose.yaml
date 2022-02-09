@@ -6,6 +6,8 @@ services:
     command: redis-server --requirepass ${REDIS_PASSWORD}
     ports:
       - ${REDIS_PORT}:${REDIS_PORT}
+    networks:
+      - data-api
   db:
     image: postgres:14.0-alpine
     volumes:
@@ -17,13 +19,33 @@ services:
       - POSTGRES_HOST_AUTH_METHOD=${POSTGRES_HOST_AUTH_METHOD}
     ports:
       - ${POSTGRES_PORT}:${POSTGRES_PORT} 
+    networks:
+      - data-api
+  mongodb:
+    image: mongo
+    #container_name: ${MONGO_HOST}
+    volumes:
+      - mongodb_data:/data/db
+      - mongo-init-db:/docker-entrypoint-initdb.d 
+    #volumes:
+    #  - ./mongo-init-db:/docker-entrypoint-initdb.d
+    #  - ./mongo-data:/data/db
+    environment:
+#      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+#      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
+    ports:
+      - 27017:27017
+      #- ${MONGO_PORT}:${MONGO_PORT}
+    networks:
+      - data-api
   web:
     build: .
     command: >
-      sh -c "python /app/manage.py migrate &&
+      sh -c "python /app/manage.py makemigrations &&
+             python /app/manage.py migrate &&
              python /app/manage.py runserver 0.0.0.0:8000 &&
-             python manage.py makemigrationns &&
-             python manage.py migrate"
+             python /app/manage.py test"
     container_name: data
     volumes:
       - .:/app
@@ -35,13 +57,24 @@ services:
       - DEBUG=${DEBUG}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
     ports:
-      - "8000:8000"
+      - ${DJANGO_PORT}:${DJANGO_PORT}
     depends_on:
       - db 
       - redis
+      - mongodb
+    networks:
+      - data-api
   adminer:
     image: adminer
     ports:
-      - 8080:8080
+      - ${ADMINER_PORT}:${ADMINER_PORT}
+    networks:
+      - data-api
+
 volumes:
   postgres_data:
+  mongodb_data:
+  mongo-init-db:
+
+networks:
+  data-api:
