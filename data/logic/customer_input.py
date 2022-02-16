@@ -1,5 +1,6 @@
 import logging
 import uuid
+import json
 from django.conf import settings
 from django.forms import model_to_dict
 from data import models
@@ -78,7 +79,19 @@ class CustomerInputLogic():
             customer_gridfs_code = customer_queryset[0].gridfs_code
             customer_json = test_collection.list_customer_input_with_gridfs(
                 customer_code, customer_gridfs_code)
-            return customer_json
+            # convertimos la coleccion de tipo json a una lista de diccionarios, 
+            # para su mejor representacion en la view.
+            customer_list = []
+            customer_columns = customer_json["columns"] 
+            customer_index = customer_json["index"]
+            customer_data = customer_json["data"]
+            for i in range(len(customer_index)):
+                customer = {}
+                for x in range(len(customer_columns)):
+                    customer.update({customer_columns[x]: customer_data[i][x]})
+                customer.update({"index":customer_index[i]})
+                customer_list.append(customer)
+            return customer_list
         else:
             raise EntityNotFound(
                 f"No customer data with customer_code: {customer_code}"

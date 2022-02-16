@@ -1,4 +1,5 @@
 import json
+from data.utils.paginator import CustomPageNumberPaginator
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
@@ -34,6 +35,11 @@ class CustomerInputViewClass(ViewSet):
     @method_decorator(cache_page(60*60*2))
     @method_decorator(vary_on_cookie)
     def list(self, request, customer_code):
+        pag = CustomPageNumberPaginator()
         uuid_validator(customer_code)
         customer_input_json = self.customer_input_logic.list(customer_code)
-        return Response(customer_input_json, status=status.HTTP_200_OK)
+        results = pag.paginate_queryset(customer_input_json, request) 
+        print("#"*50)
+        print(results)
+        print(type(results))
+        return pag.get_paginated_response(results)
