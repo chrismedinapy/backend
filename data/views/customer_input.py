@@ -2,6 +2,9 @@ import json
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
 from data.logic.customer_input import CustomerInputLogic
 from data.serializers.customer_input import CustomerInputSerializers
 from data.utils.exceptions import InvalidParameter
@@ -27,3 +30,10 @@ class CustomerInputViewClass(ViewSet):
         self.customer_input_logic.create(customer, customer_csv, customer_code)
 
         return Response(status=status.HTTP_201_CREATED)
+
+    @method_decorator(cache_page(60*60*2))
+    @method_decorator(vary_on_cookie)
+    def list(self, request, customer_code):
+        uuid_validator(customer_code)
+        customer_input_json = self.customer_input_logic.list(customer_code)
+        return Response(customer_input_json, status=status.HTTP_200_OK)

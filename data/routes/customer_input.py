@@ -7,5 +7,6 @@ customer_input_routes = [
 
     path("input/customer/<str:customer_code>/products/",
          CustomerInputViewClass.as_view({
-             "post": "create"}), name="products_input"),
+             "post": "create",
+             "get": "list" }), name="products_input"),
 ]

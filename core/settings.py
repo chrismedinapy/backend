@@ -103,20 +103,21 @@ WSGI_APPLICATION = 'core.wsgi.application'
 #        'NAME': BASE_DIR / 'db.sqlite3',
 #    }
 # }
-REDIS_PASSWORD=config("REDIS_PASSWORD")
-REDIS_HOST=config("REDIS_HOST")
-REDIS_PORT=config("REDIS_PORT")
+REDIS_PASSWORD = config("REDIS_PASSWORD")
+REDIS_HOST = config("REDIS_HOST")
+REDIS_PORT = config("REDIS_PORT")
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        #'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}',
+        # 'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}',
         'LOCATION': f'redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}',
     }
 }
 
+
 REST_FRAMEWORK_EXTENSIONS = {
-             # El tiempo de vencimiento es en segundos
-    'DEFAULT_CACHE_RESPONSE_TIMEOUT':60*60*2
+    # El tiempo de vencimiento es en segundos
+    'DEFAULT_CACHE_RESPONSE_TIMEOUT': 60*60*2
 }
 
 DATABASES = {
@@ -126,7 +127,7 @@ DATABASES = {
         'USER': config("POSTGRES_USER"),
         'PASSWORD': config("POSTGRES_PASSWORD"),
         'HOST': config("POSTGRES_HOST"),
-        #'HOST':"localhost",
+        # 'HOST':"localhost",
         'PORT': config("POSTGRES_PORT"),
     }
 }
@@ -177,3 +178,15 @@ FILES_URL = 'files/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+PROTOCOL="amqp",  # in prod change with "amqps"
+# RABBITMQ_HOST='localhost'
+RABBITMQ_HOST=config("RABBITMQ_DEFAULT_HOST")
+RABBITMQ_PORT=config("RABBITMQ_PORTS_1")
+RABBITMQ_USER=config("RABBITMQ_DEFAULT_USER")
+RABBITMQ_PASSWORD=config("RABBITMQ_DEFAULT_PASS")
+RABBITMQ_DEFAULT_HOST=config("RABBITMQ_DEFAULT_HOST")
+RABBITMQ_DEFAULT_VHOST=config("RABBITMQ_DEFAULT_VHOST")
+
+# CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_DEFAULT_VHOST}"
+CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_DEFAULT_VHOST}"
