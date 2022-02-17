@@ -8,9 +8,9 @@ from data.manager.test_mongo import TestCollection
 from data.task.create_hash import hash_file
 from data.task.create_customer_input_dataset import create_collection
 from data.utils.constant import Status
-from data.utils.exceptions import DuplicatedRecord,EntityNotFound
+from data.utils.exceptions import DuplicatedRecord, EntityNotFound
 from data.utils.upload_file import upload_file_to_local
-
+from data.task.merge_dataframes import merge_dataframes
 
 class CustomerInputLogic():
     def __init__(self):
@@ -75,21 +75,33 @@ class CustomerInputLogic():
         customer_queryset = models.CustomerInput.objects.get_all_by_customer_code(
             customer_code)
         if customer_queryset:
-            test_collection = TestCollection()
+            customer_gridfs_list = []
+            for customer in customer_queryset:
+                customer_gridfs = customer.gridfs_code
+                customer_gridfs_list.append(customer_gridfs)
+            customer_json_list = []
+            for gridfs in customer_gridfs_list:
+                customer_aux = self.__get_customer_json_by_gridfs_code(customer_code, gridfs)
+                customer_json_list.append(customer_aux)
+            customer_json = {}
+            for cust in customer_json_list:
+                customer_json = merge_dataframes(cust, customer_json)    
+
             customer_gridfs_code = customer_queryset[0].gridfs_code
-            customer_json = test_collection.list_customer_input_with_gridfs(
-                customer_code, customer_gridfs_code)
-            # convertimos la coleccion de tipo json a una lista de diccionarios, 
+            # test_collection = TestCollection()
+            # customer_json = test_collection.list_customer_input_with_gridfs(
+                # customer_code, customer_gridfs_code)
+            # convertimos la coleccion de tipo json a una lista de diccionarios,
             # para su mejor representacion en la view.
             customer_list = []
-            customer_columns = customer_json["columns"] 
+            customer_columns = customer_json["columns"]
             customer_index = customer_json["index"]
             customer_data = customer_json["data"]
             for i in range(len(customer_index)):
                 customer = {}
                 for x in range(len(customer_columns)):
                     customer.update({customer_columns[x]: customer_data[i][x]})
-                customer.update({"index":customer_index[i]})
+                customer.update({"index": customer_index[i]})
                 customer_list.append(customer)
             return customer_list
         else:
@@ -107,3 +119,9 @@ class CustomerInputLogic():
         local_path = upload_file_to_local(
             file_csv, f'{self.root_customer_input_dir}/{customer_code}', new_csv_name)
         return local_path
+
+    def __get_customer_json_by_gridfs_code(self, customer_code, gridfs_code):
+        test_collection = TestCollection()
+        customer_json = test_collection.list_customer_input_with_gridfs(
+            customer_code, gridfs_code)
+        return customer_json
