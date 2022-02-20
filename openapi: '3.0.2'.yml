@@ -1,0 +1,310 @@
+openapi: "3.0.2"
+info:
+  title: API Core
+  version: "1.0"
+  description: Una empresa de retail necesita un servicio que pueda realizar un cluster de clientes de acuerdo a habitos de compras, y necesita visualizarlo a traves de un dashboard, para poder armar campañas de marketing mas efectivas.
+servers:
+  - url: http://localhost:8000/
+paths:
+  /data/users/login/:
+    post:
+      description: "Endpoint for login"
+      tags:
+        - "login"
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/request_login'
+      responses:
+        '200':
+          $ref: '#/components/responses/200_login'
+        '400':
+          $ref: '#/components/responses/400_login'
+
+  /data/users/login/refresh/:
+    post:
+      description: "Endpoint for the refresh of the tokens"
+      tags:
+        - "login"
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/refresh_token'
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Expired Token please login again.
+        "400":
+          $ref: '#/components/responses/400_refresh_token'
+  
+  /data/users/signup/:
+    post:
+      description: Endpoint for the registration of new users
+      tags:
+      - "login"
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/post_user'
+      responses:
+        '201': 
+          description: User has been created.
+        '404':
+          description: Bad request format
+  /data/customers/{customer_code}/:
+    get:
+      description: Details for the selected customer.
+      tags:
+      - customers
+      security:
+        - bearerAuth: []
+      parameters:
+      - in: path
+        name: customer_code
+        required: true
+        description: The customer code, must be uuid format.
+        schema:
+          type: string
+          example: 909780b0-c608-4c8c-90aa-7dadb45b7023
+      responses:
+        '200':
+          $ref: '#/components/responses/200_customer'
+        '400':
+          $ref: '#/components/responses/400_bad_request'
+        '404':
+          description: Customer not found
+        '401':
+          description: Token it's missing.
+    put: 
+      description: Update customer.
+      tags:
+      - customers
+      security:
+        - bearerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/customer_detail'
+      parameters:
+        - in: path
+          name: customer_code
+          required: true
+          description: customer code, must be in uuid format.
+          schema:
+            type: string
+            example: 909780b0-c608-4c8c-90aa-7dadb45b7023
+      responses:
+        '200':
+          description: Ok
+        '404':
+          description: Customer not found
+        '400':
+          $ref: '#/components/responses/400_bad_request'
+        '401':
+          description: Token it's missing
+    delete:
+      description: Delete customer.
+      tags:
+      - customers
+      security:
+        - bearerAuth: []
+      parameters:
+      - in: path
+        name: customer_code
+        required: true
+        description: customer code, must be in uuid format
+        schema:
+          type: string
+          example: 909780b0-c608-4c8c-90aa-7dadb45b7023
+      responses:
+        '203':
+          description: Customer deleted.
+        '400':
+          description: Bad request
+        '404':
+          description: Customer not found
+        '401':
+          description: Token it's missing
+
+  /data/customers/:
+    post:
+      description: Create a new customer.
+      tags:
+      - customers
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/customer_detail'
+      responses:
+        '201':
+          description: customer created succesfully
+        '400':
+          description: Bad request.
+        '401':
+          description: Token it's missing.
+    get:
+      description: list of all the customers.
+      tags:
+      - customers
+      parameters: []
+      responses:
+        '200':
+          $ref: '#/components/responses/200_customers' 
+        
+
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token when the user has been logged in
+
+  schemas:
+    customer_detail:
+      description: Details of the customer.
+      properties:
+        customer_name:
+          type: string
+          description: the name of the customer
+        customer_description:
+          type: string
+          description: Description of the customer.
+
+    post_user:
+      description: Body example to register a new user.
+      properties:
+        username:
+          description: username of the new register user, must be unique
+          type: string
+          example: chris
+        password:
+          description: must be an strong password for the user.
+          type: string
+          example: 909780b0-c6023
+        name: 
+          description: Full name of the register user.
+          type: string
+          example: Chris Nicholson Frangest Frauen
+        email:
+          description: Unique email.
+          example: some@thing.com
+          type: string
+        phone_number:  
+          description: Valid phone number of the new user.
+          type: string
+          example: 0994123456
+        
+    request_login:
+      description: body example to make login
+      properties:
+        username:
+          description: the name of the user.
+          type: string
+          example: Chris
+        password:
+          description: user password
+          type: string
+          example: 909780b0-c608
+    refresh_token:
+      description: body example for the request of refresh token.
+      properties:
+          user_code:
+            type: string
+            example: 909780b0-c608-4c8c-90aa-7dadb45b7023
+          old_token:
+            type: string
+            example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2NvZGUiOiIwNDI1YTA5Yi05MjE1LTRhZTQtYjhjZS0wOGQyNDg1OTk1NmMiLCJuYW1lIjoiY2hyaXMiLCJzdGF0dXMiOjEsImlhdCI6MTY0NTMwNzQ3NiwiZXhwIjoxNjQ1MzkzODc2fQ.4UXtFMilo6gh1oRQHYQO10K1H56tGb4iuVQ3ITuS_vo
+
+  responses:
+    '200_customer':
+      description: Customer Details
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/customer_detail'
+      
+    '200_customers':
+        description: List of customers.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/customer_detail'
+
+
+    '400_bad_request':
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error_code:
+                type: integer
+                example: 400
+              error_message:
+                type: string
+                example: Bad request, missing some fields.
+    '200_login':
+      description: Login succesfull
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              token: 
+                type: string
+                example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2NvZGUiOiIwNDI1YTA5Yi05MjE1LTRhZTQtYjhjZS0wOGQyNDg1OTk1NmMiLCJuYW1lIjoiY2hyaXMiLCJzdGF0dXMiOjEsImlhdCI6MTY0NTMwNzQ3NiwiZXhwIjoxNjQ1MzkzODc2fQ.4UXtFMilo6gh1oRQHYQO10K1H56tGb4iuVQ3ITuS_vo
+              user_code:
+                type: string
+                example: 909780b0-c608-4c8c-90aa-7dadb45b7023
+              name: 
+                type: string
+                example: Chris
+    '400_login':
+      description: Login payload received is not valid      
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error_code: 
+                type: integer
+                example: 400
+              message:
+                type: string
+                example: Field username and password it's missing.
+    '400_refresh_token':
+      description: Refresh payload received is not valid      
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error_code: 
+                type: integer
+                example: 400
+              message:
+                type: string
+                example: user_code or token field it's missing.
+security:
+  - bearerAuth: []
