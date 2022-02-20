@@ -138,3 +138,11 @@ GitHub.sublime-settings
 
 # SQL
 db.sqlite3
+
+# Diagram images
+diagram-images
+./diagram-images
+.diagram-images
+diagram-images/
+./diagram-images/
+.diagram-images/
