@@ -1,6 +1,6 @@
 import json
 import io
-from data.manager.test_mongo import TestCollection
+from data.manager.mongo_connection import MongoCollection
 from celery import shared_task
 import pandas as pd
 import numpy as np
@@ -32,7 +32,7 @@ def create_collection(customer_input_code, customer_code, url):
     customer_input_database = CustomerInputDataset()
     customer_input_json = customer_input_database.create_collection(
         url, customer_input_code)
-    test_collection = TestCollection()
+    test_collection = MongoCollection()
     test_collection.save_customer_with_gridfs(str(customer_input_json), customer_input_code)
         
 

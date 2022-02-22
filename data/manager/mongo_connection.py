@@ -10,7 +10,7 @@ from data.models.customer_input import CustomerInput
 from bson.objectid import ObjectId
 
 
-class TestCollection:
+class MongoCollection:
     def __init__(self):
         self.db = get_client()
 

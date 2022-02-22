@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'data',
     'middleware',
+    'django.contrib.gis',
+    'rest_framework_gis',
 ]
 
 MIDDLEWARE = [
@@ -123,7 +125,8 @@ REST_FRAMEWORK_EXTENSIONS = {
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        #'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': config("POSTGRES_DB"),
         'USER': config("POSTGRES_USER"),
         'PASSWORD': config("POSTGRES_PASSWORD"),

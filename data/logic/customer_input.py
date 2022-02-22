@@ -5,7 +5,7 @@ import json
 from django.conf import settings
 from django.forms import model_to_dict
 from data import models
-from data.manager.test_mongo import TestCollection
+from data.manager.mongo_connection import MongoCollection
 from data.task.create_hash import hash_file
 from data.task.create_customer_input_dataset import create_collection
 from data.utils.constant import Status
@@ -102,7 +102,7 @@ class CustomerInputLogic():
                 print(len(aux))
                 return aux
                 # customer_gridfs_code = customer_queryset[0].gridfs_code
-                # test_collection = TestCollection()
+                # test_collection = MongoCollection()
                 # customer_json = test_collection.list_customer_input_with_gridfs(
                 # customer_code, customer_gridfs_code)
                 # convertimos la coleccion de tipo json a una lista de diccionarios,
@@ -135,7 +135,7 @@ class CustomerInputLogic():
         return local_path
 
     def __get_customer_json_by_gridfs_code(self, customer_code, gridfs_code):
-        test_collection = TestCollection()
+        test_collection = MongoCollection()
         customer_json = test_collection.list_customer_input_with_gridfs(
             customer_code, gridfs_code)
         return customer_json

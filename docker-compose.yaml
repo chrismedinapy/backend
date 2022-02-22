@@ -10,7 +10,8 @@ services:
       - data-api
 
   db:
-    image: postgres:14.0-alpine
+    #image: postgres:14.0-alpine
+    image: postgis/postgis 
     volumes:
       - postgres_data:/var/lib/postgresql/data 
     environment:
