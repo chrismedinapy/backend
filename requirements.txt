@@ -20,6 +20,7 @@ Django==4.0.2
 django-filter==21.1
 djangorestframework==3.13.1
 djangorestframework-gis==0.18
+drf-extra-fields==3.2.1
 hiredis==2.0.0
 idna==3.3
 importlib-metadata==4.10.1
