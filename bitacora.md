@@ -22,3 +22,6 @@ Luego de aplicar el two stages build, encontre un error, se soluciono simplement
 problemas al crear grupos entre customer y user, hay un bug que no permite realizar cambios, se soluciona parcialmente comentando la linea de users dentro del modelo de customer, la solucion final seria eliminar todos los migrations files, borrar la database y hacer un fresh start. Muy costoso de momento, tal vez mas adelante.
 
 Queda pendiente la actualizacion del archivo OpenApi, y agregar mas detalles dentro del README
+
+## 01032022
+El problema del grupo entre customer y user al parecer queda solucionado agregando db_column en la columna user y customer de customer_user_group.
