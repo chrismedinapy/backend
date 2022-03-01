@@ -23,7 +23,6 @@ paths:
           $ref: '#/components/responses/200_login'
         '400':
           $ref: '#/components/responses/400_login'
-
   /data/users/login/refresh/:
     post:
       description: "Endpoint for the refresh of the tokens"
@@ -43,7 +42,6 @@ paths:
           description: Expired Token please login again.
         "400":
           $ref: '#/components/responses/400_refresh_token'
-  
   /data/users/signup/:
     post:
       description: Endpoint for the registration of new users
@@ -61,6 +59,7 @@ paths:
           description: User has been created.
         '404':
           description: Bad request format
+ 
   /data/customers/{customer_code}/:
     get:
       description: Details for the selected customer.
@@ -137,7 +136,6 @@ paths:
           description: Customer not found
         '401':
           description: Token it's missing
-
   /data/customers/:
     post:
       description: Create a new customer.
@@ -166,9 +164,66 @@ paths:
         '200':
           $ref: '#/components/responses/200_customers' 
         
+  /data/customers/{customer_code}/retail-store/:
+    post:
+      description: Create a new retail store for the current customer. 
+      tags:
+      - retail-store
+      parameters:
+      - in: path
+        name: customer_code
+        required: true
+        description: customer code, must be on a uuid format
+        schema:
+          type: string
+          example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255 
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/retail-store'
+      responses:
+        '201':
+          description: retail store created succesfully
+        '400':
+          description: Bad request.
+        '401':
+          description: Token it's missing.
 
-
-
+  /data/customers/{customer_code}/retail-store/{retail_store_code}/products/:
+    post:
+      description: Update a csv file with the data to be process
+      tags:
+        - products
+      parameters:
+      - in: path
+        name: customer_code
+        required: true
+        description: customer code, must be on a uuid format
+        schema:
+          type: string
+          example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
+      - in: path
+        name: retail_store_code
+        required: true
+        description: retail store code, must be on a uuid format
+        schema:
+          type: string
+          example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/products'
+      responses:
+        '201':
+          description: Csv updated successfully
+        '400':
+          description: Bad request.
+        '401':
+          description: Token it's missing.
 components:
   securitySchemes:
     bearerAuth:
@@ -178,6 +233,48 @@ components:
       description: JWT token when the user has been logged in
 
   schemas:
+    products:
+      description: the csv file with the metadata.
+      properties:
+        customer:
+          type: object
+          properties:
+            customer_input_description:
+              type: string
+              description: Descrition of the updated file, like sales history.
+              example: Sales history.
+            customer_input_name:
+              type: string
+              description: The name of the customer.
+              example: Supermerk2
+        customer_csv:
+          type: string
+          format: binary
+          example: sales-history-22022022.csv
+        
+    retail-store:
+      description: Add new retail store
+      properties:
+        retail_store_name:
+          type: string
+          description: the name of the retail store
+          example: Super Merk2
+        retail_store_city:
+          type: string
+          description: The name of the city where the retail store it's located
+          example: Asuncion
+        retail_store_location:
+          type: object
+          properties:
+            longitude:
+              type: number
+              description: longitude.
+              example: -57.5792491
+            latitude:
+              type: number
+              description: latitude
+              example: -25.3144846
+
     customer_detail:
       description: Details of the customer.
       properties:
