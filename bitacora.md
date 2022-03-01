@@ -25,3 +25,4 @@ Queda pendiente la actualizacion del archivo OpenApi, y agregar mas detalles den
 
 ## 01032022
 El problema del grupo entre customer y user al parecer queda solucionado agregando db_column en la columna user y customer de customer_user_group.
+Se actualizo el archivo OpenApi3.0.2.yml

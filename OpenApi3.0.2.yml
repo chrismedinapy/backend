@@ -2,7 +2,7 @@ openapi: "3.0.2"
 info:
   title: API Core
   version: "1.0"
-  description: Una empresa de retail necesita un servicio que pueda realizar un cluster de clientes de acuerdo a habitos de compras, y necesita visualizarlo a traves de un dashboard, para poder armar campañas de marketing mas efectivas.
+  description: A retail company needs a service that can make a cluster of customers according to shopping habits and needs to visualize it through a dashboard, to build more effective marketing campaigns.
 servers:
   - url: http://localhost:8000/
 paths:
@@ -168,7 +168,7 @@ paths:
     post:
       description: Create a new retail store for the current customer. 
       tags:
-      - retail-store
+      - retail-stores
       parameters:
       - in: path
         name: customer_code
@@ -190,6 +190,8 @@ paths:
           description: Bad request.
         '401':
           description: Token it's missing.
+        '404':
+          description: Customer not found.
 
   /data/customers/{customer_code}/retail-store/{retail_store_code}/products/:
     post:
@@ -224,6 +226,9 @@ paths:
           description: Bad request.
         '401':
           description: Token it's missing.
+        '404':
+          description: Customer or retail store not found.
+
 components:
   securitySchemes:
     bearerAuth:
