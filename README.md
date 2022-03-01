@@ -7,6 +7,7 @@
   - [Introduccion.](#introduccion)
   - [Tecnologias.](#tecnologias)
   - [Requerimientos.](#requerimientos)
+  - [RunServer.](#runserver)
   - [Diagramas.](#diagramas)
 
 ## Introduccion.
@@ -36,7 +37,53 @@ Una empresa de retail necesita un servicio que pueda realizar un cluster de clie
 Teniendo en cuenta los requerimientos del negocio, el servicio debe de manejar el registro de usuarios y clientes. Cada cliente podra tener mas de una sucursal. 
 El cliente cargara el archivo csv a travez de un servcio que se encargara de extraer la data, generar un dataframe y almacenar; la data extraida en un base de datos, y el archivo csv en un sistema de archivos.
 El siguiente paso consiste en procesar dichos dataframes a travez de un modelo de machine learning y el resultado guardarlo en una base de datos para luego generar infomes del mismo.
- 
+
+## RunServer.
+
+Para poder levantar el ambiente de desarrollo es necesario clonar el repositorio, y crear un archivo .env en la raiz del mismo, dicho archivo debe tener las configuraciones y credenciales necesarias.
+
+```
+git clone url
+```
+.env
+```
+SECRET_KEY=
+ALGORITHM='HS256'
+ACCESS_TOKEN_EXPIRE_DAYS=1
+ENCODING=utf-8
+POSTGRES_USER=core
+POSTGRES_PASSWORD=
+POSTGRES_DB=core
+POSTGRES_HOST_AUTH_METHOD=trust
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+DEBUG=True
+ALLOWED_HOSTS=localhost, 127.0.0.1
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=
+MONGO_INITDB_ROOT_USERNAME=core
+MONGO_INITDB_ROOT_PASSWORD=
+MONGO_INITDB_DATABASE=data
+MONGO_PORT=21017
+DJANGO_PORT=8000
+ADMINER_PORT=8080
+MONGO_HOST=mongodb
+CELERY_DEBUG=1
+CELERY_DJANGO_ALLOWED_HOSTS=localhost, 127.0.0.1, [::1]
+RABBITMQ_PORTS_1=5672
+RABBITMQ_PORTS_2=15672
+RABBITMQ_DEFAULT_USER=core
+RABBITMQ_DEFAULT_PASS=
+RABBITMQ_DEFAULT_VHOST=/
+RABBITMQ_DEFAULT_HOST=rabbitmq
+```
+El siguiente comando indica al docker el archivo .env y que realice una build sin usar la cache.
+```
+docker-compose --env-file .env up --build
+```
+
+
 
 ## Diagramas.
 En la siguiente imagene podemos ver el flujo cuando el usuario carga un archivo csv.
