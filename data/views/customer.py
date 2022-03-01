@@ -14,7 +14,7 @@ class CustomerViewClass(ViewSet):
 
     def create(self, request):
         body_validator(request.data, CustomerSerializers)
-        self.customer_logic.create(request.data)
+        self.customer_logic.create(request.data, request.user.get('user_code'))
 
         return Response(status=status.HTTP_201_CREATED)
 

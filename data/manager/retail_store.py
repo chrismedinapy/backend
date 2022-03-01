@@ -11,7 +11,7 @@ class RetailStoreManager(models.Manager):
     def get_queryset(self):
         return RetailStoreQuerySet(self.model, using=self._db)
 
-    def savae(self, retail_store):
+    def save(self, retail_store):
         try:
             retail_store.save()
             return retail_store

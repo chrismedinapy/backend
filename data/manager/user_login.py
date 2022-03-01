@@ -13,6 +13,9 @@ class UserLoginQuerySet(models.QuerySet):
     def get_by_code(self, code):
         return self.filter(user_login_code=code, status=Status.ACTIVE.value).first()
 
+    def get_by_username(self, username):
+        return self.filter(status=Status.ACTIVE.value, username=username).first()
+
 
 class UserLoginManager(models.Manager):
     def get_queryset(self):
@@ -29,6 +32,9 @@ class UserLoginManager(models.Manager):
 
     def get_user_by_code(self, code):
         return self.get_queryset().get_by_code(code)
+
+    def get_user_by_name(self, user_name):
+        return self.get_queryset().get_by_username(user_name)
 
     def save(self, user_login):
         try:

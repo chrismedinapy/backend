@@ -2,6 +2,9 @@ import re
 import uuid
 from data.utils.constant import AccessLevel
 from data.utils.exceptions import FileNotSupported, InvalidParameter
+from django.core import validators
+from django.utils.deconstruct import deconstructible
+from django.utils.translation import gettext_lazy as _
 
 
 def password_validator(password):
@@ -52,3 +55,18 @@ def csv_validator(file):
             raise FileNotSupported(f"File: {file.name} format is not supported.")
     except:
         raise FileNotSupported(f"Format is not supported.")
+
+@deconstructible
+class MyUsernameValidator(validators.RegexValidator):
+    """
+    Validator for usernames.
+
+    - Only ASCII lowercase letters, numbers and underscore are supported.
+    - Must start with a letter.
+    """
+    regex = r'^[a-z][a-z0-9_]+$'
+    message = _(
+        'Enter a valid username. This value may contain only lowercase ASCII letters, '
+        'numbers, and underscores. Must start with a letter.'
+    )
+    flags = 0

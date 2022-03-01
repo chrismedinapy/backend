@@ -1,3 +1,5 @@
 from .signup.test_create_user import CreateUserTestCase
 from .product.test_create_product import CreateProductTestCase
 from .login.test_login import LoginTest
+from .retail_store.test_create_retail_store import CreateRetailStoreTestCase
+from .customer_user_group.test_create_customer_user_group import CreateCustomerTestCase
