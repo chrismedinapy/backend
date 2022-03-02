@@ -1,46 +1,50 @@
 # DataCore.
 
-# Contenido.
+# Content.
 
 - [DataCore.](#datacore)
-- [Contenido.](#contenido)
-  - [Introduccion.](#introduccion)
-  - [Tecnologias.](#tecnologias)
-  - [Requerimientos.](#requerimientos)
+- [Content.](#content)
+  - [Introduction.](#introduction)
+  - [Technologies.](#technologies)
+  - [Requirements.](#requirements)
   - [RunServer.](#runserver)
-  - [Diagramas.](#diagramas)
+    - [Used ports.](#used-ports)
+  - [Diagrams.](#diagrams)
 
-## Introduccion.
+## Introduction.
 
-La idea principal de este proyecto es desarrollar un servicio que toma como input un archivo
-.csv guarda la metadata del archivo en una base de datos relacional (Postgresql) y los datos 
-en una base de datos no-sql (Mongodb).
+The main idea of this project is to develop a service that takes as input a .csv file, saves the metadata of the file in a relational database (Postgresql), and the data, inside the file, in a non-SQL database (MongoDB). 
+Then the data in the MongoDB will be used to create a
+ dataset, which in the end will feed a machine learning model.
 
-Luego los datos en la base de datos Mongodb seran utilizados para crear un dataset, que al 
-final sera utilizado para alimentar un modelo de machine learning.
+## Technologies.
 
-## Tecnologias.
-- Docker, contenedor de aplicaciones, todos los servicios estan conectados y trabajan en conjunto gracias a la utilizacion de docker-compose.
-- Django y Django Rest, es un framework para el desarrollo de APIs, esta escrito en Python.
-- Postgresql, para guardar los datos de los usuarios y la metada en general.
-- Mongodb, base de datos no relacional, sera la responsablde de guardar los dataframes que seran utilizados para alimentar el modelo de machine learning.
-- Redis, motor de base de datos en memoria, sera la encargada de cachear ciertas peticiones de nuestro servicio.
-- Celery, es un distribuidor asincrono de tareas.
-- Rabbitmq, como broker de mensajes, trabaja en conjunto con celery.
-- Pandas, un excel en esteroides.
+- Docker, application container, all services are connected and work together thanks to the use of docker-compose.
+- Django and Django Rest, a framework for API development, written in Python.
+- Postgresql, to store user data and metadata in general.
+- MongoDB, a non-relational database, will be responsible for storing the data frames that will be used to feed the machine learning model.
+- Redis, an in-memory database engine, will be in charge of caching certain requests of our service.
+- Celery, an asynchronous task distributor.
+- Rabbitmq, as a message broker, works in conjunction with celery.
+- Pandas, an excel on steroids.
+- OpenApi, for service documentation.
 
-## Requerimientos.
-Estos son unos requerimientos ficticios, utilizados para poder implementar varias tecologias en las que estoy interesado.
+## Requirements.
 
-Una empresa de retail necesita un servicio que pueda realizar un cluster de clientes de acuerdo a habitos de compras, y necesita visualizarlo a traves de un dashboard, para poder armar campañas de marketing mas efectivas.
+These are some fictitious requirements, used to implement several technologies I am interested in.
 
-Teniendo en cuenta los requerimientos del negocio, el servicio debe de manejar el registro de usuarios y clientes. Cada cliente podra tener mas de una sucursal. 
-El cliente cargara el archivo csv a travez de un servcio que se encargara de extraer la data, generar un dataframe y almacenar; la data extraida en un base de datos, y el archivo csv en un sistema de archivos.
-El siguiente paso consiste en procesar dichos dataframes a travez de un modelo de machine learning y el resultado guardarlo en una base de datos para luego generar infomes del mismo.
+A retail company needs a service that can make a cluster of customers according to shopping habits and needs to visualize it through a dashboard, in order to build more effective marketing campaigns.
+
+Taking into account the requirements of the business, the service should manage the registration of users and customers. Each customer can have more than one retail store. 
+
+The client will upload the CSV file through a service that will extract the data, generate a data frame, and store; the extracted data in a database, and the CSV file in a file system.
+
+The next step is to process these data frames through a machine learning model and from the results generate reports.
 
 ## RunServer.
 
-Para poder levantar el ambiente de desarrollo es necesario clonar el repositorio, y crear un archivo .env en la raiz del mismo, dicho archivo debe tener las configuraciones y credenciales necesarias.
+In order to build the development environment, it is necessary to clone the repository and create a .env file in the root of the repository, this file must have the necessary configurations and credentials.
+
 
 ```
 git clone url
@@ -78,35 +82,45 @@ RABBITMQ_DEFAULT_PASS=
 RABBITMQ_DEFAULT_VHOST=/
 RABBITMQ_DEFAULT_HOST=rabbitmq
 ```
-El siguiente comando indica al docker el archivo .env y que realice una build sin usar la cache.
+
+The following command tells Docker to use the .env file to build without using the cache.
+
 ```
 docker-compose --env-file .env up --build
 ```
 
 
+### Used ports.
 
-## Diagramas.
-En la siguiente imagene podemos ver el flujo cuando el usuario carga un archivo csv.
+| SERVICE | PORT | 
+|--|--|
+| REST-API | 8000|
+| ADMINER | 8080 |
+| OPENAPI | 8181 |
+
+## Diagrams.
+
+In the following image, we can see the flow when the user loads a CSV file.
 
 ![Usuario carga archivo csv](diagram-images/user-save-csv.png)
 
-  1. El usuario carga el archivo csv a travez del servicio.
-     1. El servicio genera un hash por cada archivo que recibe, y lo guarda como metadata, luego compara si dicho hash ya existe en la base de datos, de ser asi, envia un error diciendo que el archivo ya fue alzado.
-  2. Se guarda metadatos del archivo y el usuario.
-  3. Guarda el archivo csv en un sistema de archivos.
-  4. Celery crea un trabajo asincrono y lo pasa al broker.
-  5. El worker verifica si existen trabajos en el broker.
-  6. El worker genera un dataframe a partir de los datos dentro del archivo csv, dicho dataframe es guardado en la base de datos mongo, y mas metadata es agregada a la base de datos postgres.
+ 1. The user loads the CSV file through the service.
+     1. The service generates a hash for each file it receives and saves it as metadata, then compares if the hash already exists in the database, if so, it sends an error saying that the file has already been uploaded.
+  2. It saves metadata of the file and the user.
+  3. Saves the CSV file to a file system.
+  4. Celery creates an asynchronous job and passes it to the broker.
+  5. The worker checks if there are jobs in the broker.
+  6. The worker generates a data frame from the data inside the CSV file, this data frame is stored in the mongo database, and more metadata is added to the Postgres database.
 
-A continuacion una descripcion del flujo cuando el usuario solicita un informe.
+Below is a description of the flow when the user requests a report.
 
 ![Usuario solicita informe](diagram-images/user-request-new-report.png)
 
-  1. El usuario solicita un informe.
-  2. La API verifica si los datos se encuentran cacheados.
-  3. A traves de celery se crea un nuevo job que es enviado al broker.
-  4. El worker toma un nuevo trabajo.
-  5. Verifica si existen datos del cliente en la base de datos postgresql, de ser asi, extrae sus datos y metadatos.
-  6. Obtiene los dataframes correspondiente a ese usuario.
-  7. Analiza los dataframes con un modelo de machine learning dedicado al clustering. 
-  8. Guarda la informacion en postgresql y notifica al usuario.
+  1. The user requests a report.
+  2. The API checks if the data is cached.
+  3. A new job is created through celery and sent to the broker.
+  4. The worker takes a new job.
+  5. It verifies if the client's data exists in the PostgreSQL database, if so, it extracts its data and metadata.
+  6. It obtains the data frames corresponding to that user.
+  7. Analyze the data frames with a machine learning model for clustering. 
+  8. Saves the information in PostgreSQL and notifies the user.

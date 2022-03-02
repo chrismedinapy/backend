@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="edWAqUpHDWW6G-AhPGwh" name="carga-csv">
-        <mxGraphModel dx="928" dy="575" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" fold="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -61,13 +61,13 @@
                         <mxPoint x="520" y="258" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="17" value="1- Usuario carga archivo csv" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+                <mxCell id="17" value="1- User upload a CSV file" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
                     <mxGeometry x="120" y="170" width="130" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="18" value="API" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
                     <mxGeometry x="310" y="193" width="60" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="20" value="4- Celery crea un trabajo" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+                <mxCell id="20" value="4- Celery creates a new job" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
                     <mxGeometry x="410" y="178" width="150" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="21" value="MongoDB" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
@@ -88,10 +88,10 @@
                 <mxCell id="26" value="2-&amp;nbsp; Metadata" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
                     <mxGeometry x="320" y="288" width="90" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="27" value="5- Broker asigna job a worker" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+                <mxCell id="27" value="5- New job from broker" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
                     <mxGeometry x="670" y="248" width="80" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="28" value="6- Genera DataFrame a partir del archivo csv y lo guarda en DB" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+                <mxCell id="28" value="6- Generates DataFrame from the CSV file and saves it in DB." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
                     <mxGeometry x="535" y="393" width="170" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="29" value="7- Metadata" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
@@ -112,7 +112,7 @@
                         <mxPoint x="520" y="158" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="35" value="3- Guarda archivo csv" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+                <mxCell id="35" value="3- Save CSV file" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
                     <mxGeometry x="420" y="228" width="80" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="36" value="" style="endArrow=classic;html=1;entryX=0.38;entryY=-0.018;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" target="8" edge="1">
@@ -125,7 +125,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="qS5TG3vz2tIqG2NW8Nwz" name="user-request">
-        <mxGraphModel dx="773" dy="479" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
+        <mxGraphModel dx="873" dy="740" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
             <root>
                 <mxCell id="gjFfZhPthb1lCIDYPucl-0"/>
                 <mxCell id="gjFfZhPthb1lCIDYPucl-1" parent="gjFfZhPthb1lCIDYPucl-0"/>
@@ -165,16 +165,16 @@
                         <mxPoint x="524" y="188" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="gjFfZhPthb1lCIDYPucl-16" value="1- Usuario solicita un nuevo Informe" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
+                <mxCell id="gjFfZhPthb1lCIDYPucl-16" value="1-&amp;nbsp;User requests a new Report" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
                     <mxGeometry x="124" y="100" width="130" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="gjFfZhPthb1lCIDYPucl-17" value="API" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
                     <mxGeometry x="314" y="123" width="60" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="gjFfZhPthb1lCIDYPucl-18" value="2- Verifica si la respuesta no esta en la cache" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
+                <mxCell id="gjFfZhPthb1lCIDYPucl-18" value="2- Verify if the result is not in the cache." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
                     <mxGeometry x="104" y="238" width="115" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="gjFfZhPthb1lCIDYPucl-19" value="3- Celery crea un trabajo" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
+                <mxCell id="gjFfZhPthb1lCIDYPucl-19" value="3- Celery create a new job" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
                     <mxGeometry x="414" y="108" width="150" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="gjFfZhPthb1lCIDYPucl-21" value="Postgresql" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
@@ -189,16 +189,16 @@
                 <mxCell id="gjFfZhPthb1lCIDYPucl-24" value="RabbitMQ" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
                     <mxGeometry x="604" y="123" width="60" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="gjFfZhPthb1lCIDYPucl-25" value="8-&amp;nbsp; Informes" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
+                <mxCell id="gjFfZhPthb1lCIDYPucl-25" value="8-&amp;nbsp; Report" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
                     <mxGeometry x="328" y="218" width="90" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="gjFfZhPthb1lCIDYPucl-26" value="4- El worker consume nuevos trabajos." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
                     <mxGeometry x="674" y="178" width="80" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="gjFfZhPthb1lCIDYPucl-27" value="6- Extrae los DF correspondientes al cliente" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
+                <mxCell id="gjFfZhPthb1lCIDYPucl-27" value="6- Extracts the DF corresponding to the customer" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
                     <mxGeometry x="479" y="323" width="170" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="gjFfZhPthb1lCIDYPucl-28" value="&lt;br&gt;5- Extrae datos y metadata del cliente" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
+                <mxCell id="gjFfZhPthb1lCIDYPucl-28" value="5- Extracts data and metadata from the customer." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
                     <mxGeometry x="460" y="228" width="80" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="gjFfZhPthb1lCIDYPucl-37" value="" style="group" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1" connectable="0">
@@ -219,7 +219,7 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="gjFfZhPthb1lCIDYPucl-39" value="7- Analiza&amp;nbsp; DF, genera informe, guarda en DB, Notifica Actor" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
+                <mxCell id="gjFfZhPthb1lCIDYPucl-39" value="7- Analyzes DF, generates the report, saves in DB, Notifies Actor" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="gjFfZhPthb1lCIDYPucl-1" vertex="1">
                     <mxGeometry x="680" y="330" width="96" height="92" as="geometry"/>
                 </mxCell>
                 <mxCell id="gjFfZhPthb1lCIDYPucl-40" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.417;entryY=1.033;entryDx=0;entryDy=0;entryPerimeter=0;" parent="gjFfZhPthb1lCIDYPucl-1" source="gjFfZhPthb1lCIDYPucl-7" target="gjFfZhPthb1lCIDYPucl-3" edge="1">
@@ -237,7 +237,7 @@
                 <mxCell id="gjFfZhPthb1lCIDYPucl-43" style="edgeStyle=none;html=1;exitX=1;exitY=0;exitDx=0;exitDy=15;exitPerimeter=0;" parent="gjFfZhPthb1lCIDYPucl-1" source="gjFfZhPthb1lCIDYPucl-6" target="gjFfZhPthb1lCIDYPucl-23" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="nhNQ0GQq7a0uREzDSOVx-4" value="" style="endArrow=classic;startArrow=classic;html=1;entryX=0;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="gjFfZhPthb1lCIDYPucl-1" source="gjFfZhPthb1lCIDYPucl-5">
+                <mxCell id="nhNQ0GQq7a0uREzDSOVx-4" value="" style="endArrow=classic;startArrow=classic;html=1;entryX=0;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="gjFfZhPthb1lCIDYPucl-1" source="gjFfZhPthb1lCIDYPucl-5" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
                         <mxPoint x="593.9999999999999" y="308" as="sourcePoint"/>
                         <mxPoint x="664" y="168" as="targetPoint"/>
