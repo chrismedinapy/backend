@@ -192,6 +192,28 @@ paths:
           description: Token it's missing.
         '404':
           description: Customer not found.
+    get:
+      description: Get the list of all the retail store by customer_code.
+      parameters:
+      - in: path
+        name: customer_code
+        required: true
+        description: customer code, must be on a uuid format
+        schema:
+          type: string
+          example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255 
+      - in: path
+        name: retail_store_code
+        required: true
+        description: retail store code, must be on a uuid format
+        schema:
+          type: string
+          example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255 
+      tags:
+        - retail-stores
+      responses:
+        '200':
+          $ref: '#/components/responses/200_retail_store_list'
 
   /data/customers/{customer_code}/retail-store/{retail_store_code}/products/:
     post:
@@ -336,6 +358,15 @@ components:
             example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2NvZGUiOiIwNDI1YTA5Yi05MjE1LTRhZTQtYjhjZS0wOGQyNDg1OTk1NmMiLCJuYW1lIjoiY2hyaXMiLCJzdGF0dXMiOjEsImlhdCI6MTY0NTMwNzQ3NiwiZXhwIjoxNjQ1MzkzODc2fQ.4UXtFMilo6gh1oRQHYQO10K1H56tGb4iuVQ3ITuS_vo
 
   responses:
+    '200_retail_store_list':
+      description: retail store list
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/retail-store'
+            
     '200_customer':
       description: Customer Details
       content:

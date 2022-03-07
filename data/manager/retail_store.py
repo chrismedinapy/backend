@@ -1,10 +1,15 @@
+from re import I
 from django.db import IntegrityError, models
+from data.utils.constant import Status
 
 from data.utils.exceptions import DuplicatedRecord, InvalidOperation
 
 
 class RetailStoreQuerySet(models.QuerySet):
     pass
+
+    def get_all_by_customer_code(self, customer_code):
+        return self.filter(status=Status.ACTIVE.value, customer=customer_code)
 
 
 class RetailStoreManager(models.Manager):
@@ -21,3 +26,6 @@ class RetailStoreManager(models.Manager):
             raise InvalidOperation(
                 f"Error while trying to save retail store \n Error Message: {ex}"
             )
+
+    def get_all_by_customer_code(self, customer_code):
+        return self.get_queryset().get_all_by_customer_code(customer_code)

@@ -14,3 +14,7 @@ class RetailStoreViewClass(ViewSet):
         uuid_validator(customer_code)
         self.retail_store_logic.create(request.data, customer_code)
         return Response(status=status.HTTP_201_CREATED)
+
+    def get_all(self, request, customer_code):
+        uuid_validator(customer_code)
+        return Response(self.retail_store_logic.get_all(customer_code), status=status.HTTP_200_OK)
