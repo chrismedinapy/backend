@@ -1,6 +1,6 @@
 import uuid
-from data.models.customer_user_group import CustomerUserGroup
-from data.models.customer import Customer
+# from data.models.customer_user_group import CustomerUserGroup
+from data.models.customer import Customer, CustomerUserGroup
 from data.models.user import User
 from data.utils.constant import AccessLevel, Status
 from data.utils.exceptions import EntityNotFound, NotMember
