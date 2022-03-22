@@ -1,5 +1,3 @@
-import json
-import io
 from data.manager.mongo_connection import MongoCollection
 from celery import shared_task
 import pandas as pd

@@ -1,5 +1,4 @@
 import logging
-from re import A
 import uuid
 import json
 from django.conf import settings
@@ -20,17 +19,24 @@ class CustomerInputLogic():
                        'customer_input_code', 'customer_input_name']
         self.root_customer_input_dir = f'{settings.FILES_ROOT}/customer_csv'
 
-    def create(self, customer_data, customer_csv, customer_code):
+    def create(self, customer_data, customer_csv, customer_code, retail_store_code):
 
         customer_input_description = customer_data.get(
             'customer_input_description')
         try:
+            retail_store = models.RetailStore.objects.get_retail_store_by_code(
+                retail_store_code)
+            if not retail_store:
+                raise EntityNotFound(
+                    f"No retail store with code: {retail_store_code}")
+
             customer_queryset = models.CustomerInput.objects.get_all_by_customer_code(
                 customer_code)
             # create customer.
-            customer_input = models.CustomerInput(customer_input_code=str(uuid.uuid4()),
+
+            customer_input = models.CustomerInput(customer_input_code=str(uuid.uuid4()), retail_store=retail_store,
                                                   customer_input_description=customer_input_description, customer_csv_uploaded_name=customer_csv.name,
-                                                  customer_code=customer_code, customer_input_name=customer_data.get("customer_input_name"), status=Status.ACTIVE.value)
+                                                  customer_code=customer_code, status=Status.ACTIVE.value)
             # verify if the hash has already uploaded before.
             # TODO
             # Esto debe ir en una funcion asincrona,
@@ -73,9 +79,13 @@ class CustomerInputLogic():
                 f"Error while trying to save customer", exc_info=ex)
             raise ex
 
-    def list(self, customer_code):
+    def list(self, customer_code, retail_store_code):
         customer_queryset = models.CustomerInput.objects.get_all_by_customer_code(
             customer_code)
+        retail_store_queryset=models.RetailStore.objects.get_retail_store_by_code(retail_store_code)
+        if not retail_store_queryset:
+            raise EntityNotFound(f"Retail store with code: {retail_store_code} not found.")
+
         if customer_queryset:
             if len(customer_queryset) == 1:
                 gridfs = customer_queryset[0].gridfs_code
@@ -98,26 +108,7 @@ class CustomerInputLogic():
                     else:
                         break
                 aux = self.__convert_from_json_to_dict(customer_json)
-                print("#"*50)
-                print(len(aux))
                 return aux
-                # customer_gridfs_code = customer_queryset[0].gridfs_code
-                # test_collection = MongoCollection()
-                # customer_json = test_collection.list_customer_input_with_gridfs(
-                # customer_code, customer_gridfs_code)
-                # convertimos la coleccion de tipo json a una lista de diccionarios,
-                # para su mejor representacion en la view.
-                # customer_list = []
-                # customer_columns = customer_json["columns"]
-                # customer_index = customer_json["index"]
-                # customer_data = customer_json["data"]
-                # for i in range(len(customer_index)):
-                #     customer = {}
-                #     for x in range(len(customer_columns)):
-                #         customer.update({customer_columns[x]: customer_data[i][x]})
-                #     customer.update({"index": customer_index[i]})
-                #     customer_list.append(customer)
-                # return customer_list
         else:
             raise EntityNotFound(
                 f"No customer data with customer_code: {customer_code}"

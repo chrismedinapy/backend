@@ -18,3 +18,8 @@ class RetailStoreViewClass(ViewSet):
     def get_all(self, request, customer_code):
         uuid_validator(customer_code)
         return Response(self.retail_store_logic.get_all(customer_code), status=status.HTTP_200_OK)
+
+    def get(self, request, customer_code, retail_store_code):
+        uuid_validator(customer_code)
+        uuid_validator(retail_store_code)
+        return Response(self.retail_store_logic.get(customer_code, retail_store_code), status=status.HTTP_200_OK)

@@ -1,6 +1,7 @@
 
 
 import uuid
+from xml.dom.minidom import Entity
 
 from django.contrib.gis.geos import Point
 from django.forms import model_to_dict
@@ -12,7 +13,7 @@ from data.utils.exceptions import EntityNotFound, InvalidParameter
 class RetailStoreLogic():
     def __init__(self) -> None:
         self.fields = ["retail_store_code", "retail_store_name",
-                       "retail_store_location", "retail_store_city"]
+                       "retail_store_city"]
 
     def create(self, retail_store_data, customer_code):
         retail_store_code = str(uuid.uuid4())
@@ -51,6 +52,20 @@ class RetailStoreLogic():
         for retail in retail_stores:
             retail_store_list.append(self.__retail_store_mapped(retail))
         return retail_store_list
+
+    def get(self, customer_code, retail_store_code):
+        customer = Customer.objects.get_customer_by_code(customer_code)
+        if not customer:
+            raise EntityNotFound(
+                f"Customer with code: {customer_code} not found")
+
+        retail_store = RetailStore.objects.get_retail_store_by_code(
+            retail_store_code)
+        if not retail_store:
+            raise EntityNotFound(
+                f"Retail store with code: {retail_store_code} not found")
+
+        return self.__retail_store_mapped(retail_store)
 
     def __retail_store_mapped(self, retail_store):
         retail_store_dict = model_to_dict(retail_store, fields=self.fields)
