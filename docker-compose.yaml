@@ -8,7 +8,6 @@ services:
       - ${REDIS_PORT}:${REDIS_PORT}
     networks:
       - data-api
-
   db:
     image: postgis/postgis:13-3.2-alpine
     volumes:
@@ -33,7 +32,6 @@ services:
       - ${MONGO_PORT}:${MONGO_PORT}
     networks:
       - data-api
-
   web:
     build: .
     command: >
@@ -65,7 +63,6 @@ services:
       - ${ADMINER_PORT}:${ADMINER_PORT}
     networks:
       - data-api
-
   rabbitmq:
     container_name: "rabbitmq"
     image: rabbitmq:3-management-alpine
@@ -78,7 +75,6 @@ services:
       - ${RABBITMQ_PORTS_2}:${RABBITMQ_PORTS_2}
     networks:
       - data-api
-
   celery:
       build: .
       command: celery -A core worker -l info -P threads --autoscale=10,3 -E --uid nobody
@@ -101,6 +97,7 @@ services:
       - ./OpenApi3.0.2.yml:/OpenApi3.0.2.yml
    environment:
       SWAGGER_JSON: /OpenApi3.0.2.yml
+
 volumes:
   postgres_data:
   mongodb_data:
