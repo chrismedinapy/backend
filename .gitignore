@@ -42,3 +42,5 @@ files
 ./target
 .target
 /target
+.pytest_cache
+.vscode
