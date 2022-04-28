@@ -17,12 +17,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/request_login'
+              $ref: "#/components/schemas/request_login"
       responses:
-        '200':
-          $ref: '#/components/responses/200_login'
-        '400':
-          $ref: '#/components/responses/400_login'
+        "200":
+          $ref: "#/components/responses/200_login"
+        "400":
+          $ref: "#/components/responses/400_login"
   /data/users/login/refresh/:
     post:
       description: "Endpoint for the refresh of the tokens"
@@ -34,60 +34,60 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/refresh_token'
+              $ref: "#/components/schemas/refresh_token"
       responses:
         "200":
           description: OK
         "401":
           description: Expired Token please login again.
         "400":
-          $ref: '#/components/responses/400_refresh_token'
+          $ref: "#/components/responses/400_refresh_token"
   /data/users/signup/:
     post:
       description: Endpoint for the registration of new users
       tags:
-      - "login"
+        - "login"
       parameters: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/post_user'
+              $ref: "#/components/schemas/post_user"
       responses:
-        '201': 
+        "201":
           description: User has been created.
-        '404':
+        "404":
           description: Bad request format
- 
+
   /data/customers/{customer_code}/:
     get:
       description: Details for the selected customer.
       tags:
-      - customers
+        - customers
       security:
         - bearerAuth: []
       parameters:
-      - in: path
-        name: customer_code
-        required: true
-        description: The customer code, must be uuid format.
-        schema:
-          type: string
-          example: 909780b0-c608-4c8c-90aa-7dadb45b7023
+        - in: path
+          name: customer_code
+          required: true
+          description: The customer code, must be uuid format.
+          schema:
+            type: string
+            example: 909780b0-c608-4c8c-90aa-7dadb45b7023
       responses:
-        '200':
-          $ref: '#/components/responses/200_customer'
-        '400':
-          $ref: '#/components/responses/400_bad_request'
-        '404':
+        "200":
+          $ref: "#/components/responses/200_customer"
+        "400":
+          $ref: "#/components/responses/400_bad_request"
+        "404":
           description: Customer not found
-        '401':
+        "401":
           description: Token it's missing.
-    put: 
+    put:
       description: Update customer.
       tags:
-      - customers
+        - customers
       security:
         - bearerToken: []
       requestBody:
@@ -95,7 +95,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/customer_detail'
+              $ref: "#/components/schemas/customer_detail"
       parameters:
         - in: path
           name: customer_code
@@ -105,115 +105,115 @@ paths:
             type: string
             example: 909780b0-c608-4c8c-90aa-7dadb45b7023
       responses:
-        '200':
+        "200":
           description: Ok
-        '404':
+        "404":
           description: Customer not found
-        '400':
-          $ref: '#/components/responses/400_bad_request'
-        '401':
+        "400":
+          $ref: "#/components/responses/400_bad_request"
+        "401":
           description: Token it's missing
     delete:
       description: Delete customer.
       tags:
-      - customers
+        - customers
       security:
         - bearerAuth: []
       parameters:
-      - in: path
-        name: customer_code
-        required: true
-        description: customer code, must be in uuid format
-        schema:
-          type: string
-          example: 909780b0-c608-4c8c-90aa-7dadb45b7023
+        - in: path
+          name: customer_code
+          required: true
+          description: customer code, must be in uuid format
+          schema:
+            type: string
+            example: 909780b0-c608-4c8c-90aa-7dadb45b7023
       responses:
-        '203':
+        "203":
           description: Customer deleted.
-        '400':
+        "400":
           description: Bad request
-        '404':
+        "404":
           description: Customer not found
-        '401':
+        "401":
           description: Token it's missing
   /data/customers/:
     post:
       description: Create a new customer.
       tags:
-      - customers
+        - customers
       parameters: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/customer_detail'
+              $ref: "#/components/schemas/customer_detail"
       responses:
-        '201':
+        "201":
           description: customer created succesfully
-        '400':
+        "400":
           description: Bad request.
-        '401':
+        "401":
           description: Token it's missing.
     get:
       description: list of all the customers.
       tags:
-      - customers
+        - customers
       parameters: []
       responses:
-        '200':
-          $ref: '#/components/responses/200_customers' 
-        
+        "200":
+          $ref: "#/components/responses/200_customers"
+
   /data/customers/{customer_code}/retail-store/:
     post:
-      description: Create a new retail store for the current customer. 
+      description: Create a new retail store for the current customer.
       tags:
-      - retail-stores
+        - retail-stores
       parameters:
-      - in: path
-        name: customer_code
-        required: true
-        description: customer code, must be on a uuid format
-        schema:
-          type: string
-          example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255 
+        - in: path
+          name: customer_code
+          required: true
+          description: customer code, must be on a uuid format
+          schema:
+            type: string
+            example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/retail-store'
+              $ref: "#/components/schemas/retail-store"
       responses:
-        '201':
+        "201":
           description: retail store created succesfully
-        '400':
+        "400":
           description: Bad request.
-        '401':
+        "401":
           description: Token it's missing.
-        '404':
+        "404":
           description: Customer not found.
     get:
       description: Get the list of all the retail store by customer_code.
       parameters:
-      - in: path
-        name: customer_code
-        required: true
-        description: customer code, must be on a uuid format
-        schema:
-          type: string
-          example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255 
-      - in: path
-        name: retail_store_code
-        required: true
-        description: retail store code, must be on a uuid format
-        schema:
-          type: string
-          example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255 
+        - in: path
+          name: customer_code
+          required: true
+          description: customer code, must be on a uuid format
+          schema:
+            type: string
+            example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
+        - in: path
+          name: retail_store_code
+          required: true
+          description: retail store code, must be on a uuid format
+          schema:
+            type: string
+            example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
       tags:
         - retail-stores
       responses:
-        '200':
-          $ref: '#/components/responses/200_retail_store_list'
+        "200":
+          $ref: "#/components/responses/200_retail_store_list"
 
   /data/customers/{customer_code}/retail-store/{retail_store_code}/products/:
     post:
@@ -221,35 +221,75 @@ paths:
       tags:
         - products
       parameters:
-      - in: path
-        name: customer_code
-        required: true
-        description: customer code, must be on a uuid format
-        schema:
-          type: string
-          example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
-      - in: path
-        name: retail_store_code
-        required: true
-        description: retail store code, must be on a uuid format
-        schema:
-          type: string
-          example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
+        - in: path
+          name: customer_code
+          required: true
+          description: customer code, must be on a uuid format
+          schema:
+            type: string
+            example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
+        - in: path
+          name: retail_store_code
+          required: true
+          description: retail store code, must be on a uuid format
+          schema:
+            type: string
+            example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/products'
+              $ref: "#/components/schemas/products"
       responses:
-        '201':
+        "201":
           description: Csv updated successfully
-        '400':
+        "400":
           description: Bad request.
-        '401':
+        "401":
           description: Token it's missing.
-        '404':
+        "404":
           description: Customer or retail store not found.
+
+  /data/customers/{customer_code}/reports/:
+    get:
+      description: List all the reports of the given customer.
+      tags:
+        - reports
+      parameters:
+        - in: path
+          name: customer_code
+          required: true
+          description: customer code, must be on uuid format
+          schema:
+            type: string
+            example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
+      responses:
+        "200":
+          $ref: "#/components/responses/200_customer_report_list"
+  /data/customers/{customer_code}/retail-store/{retail_store_code}/reports/:
+    get:
+      description: The report of the given retail store.
+      tags:
+        - reports
+      parameters:
+        - in: path
+          name: customer_code
+          required: true
+          description: customer code, must be on uuid format
+          schema:
+            type: string
+            example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
+        - in: path
+          name: retail_store_code
+          required: true
+          description: retail store code, must be on uuid format
+          schema:
+            type: string
+            example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
+      responses:
+        "200":
+          $ref: "#/components/responses/200_customer_report"
 
 components:
   securitySchemes:
@@ -278,7 +318,7 @@ components:
           type: string
           format: binary
           example: sales-history-22022022.csv
-        
+
     retail-store:
       description: Add new retail store
       properties:
@@ -323,7 +363,7 @@ components:
           description: must be an strong password for the user.
           type: string
           example: 909780b0-c6023
-        name: 
+        name:
           description: Full name of the register user.
           type: string
           example: Chris Nicholson Frangest Frauen
@@ -331,11 +371,11 @@ components:
           description: Unique email.
           example: some@thing.com
           type: string
-        phone_number:  
+        phone_number:
           description: Valid phone number of the new user.
           type: string
           example: 0994123456
-        
+
     request_login:
       description: body example to make login
       properties:
@@ -350,41 +390,61 @@ components:
     refresh_token:
       description: body example for the request of refresh token.
       properties:
-          user_code:
-            type: string
-            example: 909780b0-c608-4c8c-90aa-7dadb45b7023
-          old_token:
-            type: string
-            example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2NvZGUiOiIwNDI1YTA5Yi05MjE1LTRhZTQtYjhjZS0wOGQyNDg1OTk1NmMiLCJuYW1lIjoiY2hyaXMiLCJzdGF0dXMiOjEsImlhdCI6MTY0NTMwNzQ3NiwiZXhwIjoxNjQ1MzkzODc2fQ.4UXtFMilo6gh1oRQHYQO10K1H56tGb4iuVQ3ITuS_vo
+        user_code:
+          type: string
+          example: 909780b0-c608-4c8c-90aa-7dadb45b7023
+        old_token:
+          type: string
+          example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2NvZGUiOiIwNDI1YTA5Yi05MjE1LTRhZTQtYjhjZS0wOGQyNDg1OTk1NmMiLCJuYW1lIjoiY2hyaXMiLCJzdGF0dXMiOjEsImlhdCI6MTY0NTMwNzQ3NiwiZXhwIjoxNjQ1MzkzODc2fQ.4UXtFMilo6gh1oRQHYQO10K1H56tGb4iuVQ3ITuS_vo
 
   responses:
-    '200_retail_store_list':
+    "200_customer_report":
+      description: report of the given retail store
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              report_code:
+                type: string
+                example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
+              report_date:
+                type: string
+                example: 10/10/2022
+    "200_customer_report_list":
+      description: all of the customer reports.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/responses/200_customer"
+    "200_retail_store_list":
       description: retail store list
       content:
         application/json:
           schema:
             type: array
             items:
-              $ref: '#/components/schemas/retail-store'
-            
-    '200_customer':
+              $ref: "#/components/schemas/retail-store"
+
+    "200_customer":
       description: Customer Details
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/customer_detail'
-      
-    '200_customers':
-        description: List of customers.
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/customer_detail'
+            $ref: "#/components/schemas/customer_detail"
 
+    "200_customers":
+      description: List of customers.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/customer_detail"
 
-    '400_bad_request':
+    "400_bad_request":
       description: Bad request
       content:
         application/json:
@@ -397,43 +457,43 @@ components:
               error_message:
                 type: string
                 example: Bad request, missing some fields.
-    '200_login':
+    "200_login":
       description: Login succesfull
       content:
         application/json:
           schema:
             type: object
             properties:
-              token: 
+              token:
                 type: string
                 example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2NvZGUiOiIwNDI1YTA5Yi05MjE1LTRhZTQtYjhjZS0wOGQyNDg1OTk1NmMiLCJuYW1lIjoiY2hyaXMiLCJzdGF0dXMiOjEsImlhdCI6MTY0NTMwNzQ3NiwiZXhwIjoxNjQ1MzkzODc2fQ.4UXtFMilo6gh1oRQHYQO10K1H56tGb4iuVQ3ITuS_vo
               user_code:
                 type: string
                 example: 909780b0-c608-4c8c-90aa-7dadb45b7023
-              name: 
+              name:
                 type: string
                 example: Chris
-    '400_login':
-      description: Login payload received is not valid      
+    "400_login":
+      description: Login payload received is not valid
       content:
         application/json:
           schema:
             type: object
             properties:
-              error_code: 
+              error_code:
                 type: integer
                 example: 400
               message:
                 type: string
                 example: Field username and password it's missing.
-    '400_refresh_token':
-      description: Refresh payload received is not valid      
+    "400_refresh_token":
+      description: Refresh payload received is not valid
       content:
         application/json:
           schema:
             type: object
             properties:
-              error_code: 
+              error_code:
                 type: integer
                 example: 400
               message:

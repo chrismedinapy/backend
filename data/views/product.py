@@ -33,7 +33,7 @@ class ProductViewClass(ViewSet):
 
     def delete(self, resquest, product_code):
         uuid_validator(product_code)
-        product = self.product_logic.delete(product_code)
+        self.product_logic.delete(product_code)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def update(self, request, product_code):
