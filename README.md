@@ -13,9 +13,7 @@
 
 ## Introduction.
 
-The main idea of this project is to develop a service that takes as input a .csv file, saves the metadata of the file in a relational database (Postgresql), and the data, inside the file, in a non-SQL database (MongoDB). 
-Then the data in the MongoDB will be used to create a
- dataset, which in the end will feed a machine learning model.
+The main idea of this project is to develop a service that takes as input a .csv file, saves the metadata of the file in a relational database (Postgresql), and the data, inside the file, in a non-SQL database (MongoDB). Then the data in MongoDB will be used to create a dataset, which in the end will feed a machine learning model.
 
 ## Technologies.
 
