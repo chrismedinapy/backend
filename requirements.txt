@@ -23,7 +23,7 @@ debugpy==1.6.0
 decorator==5.1.1
 Deprecated==1.2.13
 dill==0.3.4
-Django==4.0.2
+Django==4.0.4
 django-cors-headers==3.11.0
 django-filter==21.1
 djangorestframework==3.13.1
@@ -74,7 +74,7 @@ py==1.11.0
 pycodestyle==2.8.0
 pycparser==2.21
 Pygments==2.11.2
-PyJWT==2.3.0
+PyJWT==2.4.0
 pylint==2.13.5
 pymongo==4.0.1
 pyparsing==3.0.7
