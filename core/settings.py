@@ -49,9 +49,11 @@ INSTALLED_APPS = [
     'middleware',
     'django.contrib.gis',
     'rest_framework_gis',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -194,3 +196,8 @@ RABBITMQ_DEFAULT_VHOST = config("RABBITMQ_DEFAULT_VHOST")
 
 # CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_DEFAULT_VHOST}"
 CELERY_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}/{RABBITMQ_DEFAULT_VHOST}"
+
+CORS_ORIGIN_ALLOW_ALL = True
+""" CORS_ORIGIN_WHITELIST = (
+  'http://localhost:3000',
+) """
