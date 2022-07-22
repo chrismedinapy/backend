@@ -48,7 +48,7 @@ class CustomerInputLogic:
             # verify if the hash has already uploaded before.
             # TODO
             # Esto debe ir en una funcion asincrona,
-            # debido a que los archivos pueden ser grandes y puden tardar
+            # debido a que los archivos pueden ser grandes y pueden tardar
             # mucho.
             hashed_csv = hash_file(customer_csv)
             # aumentamos el valor del csv_number.
