@@ -164,6 +164,29 @@ paths:
         "200":
           $ref: "#/components/responses/200_customers"
 
+  /data/customers/{customer_code}/retail-store/{retail_store_code}/:
+    get:
+      description: Get the details of a single retail store.
+      tags:
+        - retail-stores
+      parameters:
+        - in: path
+          name: customer_code
+          required: true
+          description: customer code, must be on a uuid format
+          schema:
+            type: string
+            example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
+        - in: path
+          name: retail_store_code
+          required: true
+          description: retail store code, must be on a uuid format
+          schema:
+            type: string
+            example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
+      responses:
+        "200":
+          $ref: "#/components/responses/200_retail_store"
   /data/customers/{customer_code}/retail-store/:
     post:
       description: Create a new retail store for the current customer.
@@ -202,13 +225,6 @@ paths:
           schema:
             type: string
             example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
-        - in: path
-          name: retail_store_code
-          required: true
-          description: retail store code, must be on a uuid format
-          schema:
-            type: string
-            example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
       tags:
         - retail-stores
       responses:
@@ -225,13 +241,6 @@ paths:
           name: customer_code
           required: true
           description: customer code, must be on a uuid format
-          schema:
-            type: string
-            example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
-        - in: path
-          name: retail_store_code
-          required: true
-          description: retail store code, must be on a uuid format
           schema:
             type: string
             example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
@@ -419,6 +428,12 @@ components:
             type: array
             items:
               $ref: "#/components/responses/200_customer"
+    "200_retail_store":
+      description: retail store description
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/retail-store"
     "200_retail_store_list":
       description: retail store list
       content:
