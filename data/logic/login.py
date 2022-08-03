@@ -7,13 +7,12 @@ from data.utils.exceptions import ExpiredToken
 
 
 def authenticate(login_payload):
-    username = login_payload.get('username').lower()
-    password = login_payload.get('password')
+    username = login_payload.get("username").lower()
+    password = login_payload.get("password")
     password_encrypted = Encryptor.md5_encryption(password)
 
     try:
-        user_login = User.objects.authenticate(
-            username, password_encrypted)
+        user_login = User.objects.authenticate(username, password_encrypted)
         user_login_code = str(user_login.user_login_code)
         name = user_login.name
         status = user_login.status
@@ -38,16 +37,23 @@ def refresh_token(payload):
         )
         if old_token_payload.get("user_code") == user_code:
             old_token_values = old_token_payload.values()
-            refresh_token = __generate_jwt_token(*old_token_payload)
-            return {
-                "token": refresh_token
-            }
-        raise Exception('Invalid Token')
+            refresh_token = __generate_jwt_token(*old_token_values)
+            # refresh_token = __generate_jwt_token(*old_token_payload)
+            return {"token": refresh_token}
+        raise Exception("Invalid Token")
 
     except jwt.ExpiredSignatureError:
         raise ExpiredToken("Token expired, please login again.")
 
-def __generate_jwt_token(user_login_code, name, status, now=None, *args, expiration_days=int(config("ACCESS_TOKEN_EXPIRE_DAYS"))):
+
+def __generate_jwt_token(
+    user_login_code,
+    name,
+    status,
+    now=None,
+    *args,
+    expiration_days=int(config("ACCESS_TOKEN_EXPIRE_DAYS")),
+):
     if not now:
         now = datetime.datetime.utcnow()
     expiration = datetime.datetime.utcnow() + datetime.timedelta(days=expiration_days)
@@ -58,6 +64,7 @@ def __generate_jwt_token(user_login_code, name, status, now=None, *args, expirat
         "iat": now,
         "exp": expiration,
     }
-    token = jwt.encode(token_payload, config("SECRET_KEY"),
-                       algorithm=config("ALGORITHM"))
+    token = jwt.encode(
+        token_payload, config("SECRET_KEY"), algorithm=config("ALGORITHM")
+    )
     return f"{token}"
