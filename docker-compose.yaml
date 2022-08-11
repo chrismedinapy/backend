@@ -32,6 +32,18 @@ services:
       - ${MONGO_PORT}:${MONGO_PORT}
     networks:
       - data-api
+  mongo-express:
+    image: mongo-express:0.54.0
+    environment:
+      - ME_CONFIG_BASICAUTH_USERNAME=${ME_CONFIG_BASICAUTH_USERNAME}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${ME_CONFIG_BASICAUTH_PASSWORD}
+      - ME_CONFIG_MONGODB_SERVER=${ME_CONFIG_MONGODB_SERVER}
+    ports:
+      - 8443:8081
+    depends_on:
+      - mongodb
+    networks:
+      - data-api
   web:
     build: .
     command: >
@@ -64,7 +76,7 @@ services:
     networks:
       - data-api
   rabbitmq:
-    container_name: "rabbitmq"
+    #container_name: "rabbitmq"
     image: rabbitmq:3-management-alpine
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}

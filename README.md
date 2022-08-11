@@ -95,6 +95,9 @@ docker-compose --env-file .env up --build
 | REST-API | 8000|
 | ADMINER | 8080 |
 | OPENAPI | 8181 |
+|  MONGO-EXPRESS | 8443 |
+| MONGO | 27017 |
+| POSTGRES | 5432 |
 
 ## Diagrams.
 
