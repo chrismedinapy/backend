@@ -164,11 +164,11 @@ paths:
         "200":
           $ref: "#/components/responses/200_customers"
 
-  /data/customers/{customer_code}/retail-store/{retail_store_code}/:
+  /data/customers/{customer_code}/retail_store/{retail_store_code}/:
     get:
       description: Get the details of a single retail store.
       tags:
-        - retail-stores
+        - retail_stores
       parameters:
         - in: path
           name: customer_code
@@ -187,11 +187,11 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/200_retail_store"
-  /data/customers/{customer_code}/retail-store/:
+  /data/customers/{customer_code}/retail_store/:
     post:
       description: Create a new retail store for the current customer.
       tags:
-        - retail-stores
+        - retail_stores
       parameters:
         - in: path
           name: customer_code
@@ -205,7 +205,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/retail-store"
+              $ref: "#/components/schemas/retail_store"
       responses:
         "201":
           description: retail store created succesfully
@@ -226,12 +226,12 @@ paths:
             type: string
             example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
       tags:
-        - retail-stores
+        - retail_stores
       responses:
         "200":
           $ref: "#/components/responses/200_retail_store_list"
 
-  /data/customers/{customer_code}/retail-store/{retail_store_code}/products/:
+  /data/customers/{customer_code}/retail_store/{retail_store_code}/products/:
     post:
       description: Update a csv file with the data to be process
       tags:
@@ -241,6 +241,13 @@ paths:
           name: customer_code
           required: true
           description: customer code, must be on a uuid format
+          schema:
+            type: string
+            example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
+        - in: path
+          name: retail_store_code
+          required: true
+          description: retail store code, must be on uuid format
           schema:
             type: string
             example: 7cc7dff2-55b1-4089-b0b1-9bdb313ef255
@@ -276,7 +283,7 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/200_customer_report_list"
-  /data/customers/{customer_code}/retail-store/{retail_store_code}/reports/:
+  /data/customers/{customer_code}/retail_store/{retail_store_code}/reports/:
     get:
       description: The report of the given retail store.
       tags:
@@ -328,7 +335,7 @@ components:
           format: binary
           example: sales-history-22022022.csv
 
-    retail-store:
+    retail_store:
       description: Add new retail store
       properties:
         retail_store_name:
@@ -433,7 +440,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/retail-store"
+            $ref: "#/components/schemas/retail_store"
     "200_retail_store_list":
       description: retail store list
       content:
@@ -441,7 +448,7 @@ components:
           schema:
             type: array
             items:
-              $ref: "#/components/schemas/retail-store"
+              $ref: "#/components/schemas/retail_store"
 
     "200_customer":
       description: Customer Details
