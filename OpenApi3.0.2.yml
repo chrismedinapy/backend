@@ -6,6 +6,17 @@ info:
 servers:
   - url: http://localhost:8000/
 paths:
+  /products:
+    get:
+      parameters:
+      - in: query
+        name: color
+        required: true
+        schema:
+          $ref: '#/components/schemas/Color'
+      responses:
+        '200':
+          description: OK
   /data/users/login/:
     post:
       description: "Endpoint for login"
@@ -316,6 +327,14 @@ components:
       description: JWT token when the user has been logged in
 
   schemas:
+    Color:
+      type: string
+      enum:
+        - black
+        - white
+        - red
+        - green
+        - blue
     products:
       description: the csv file with the metadata.
       properties:
@@ -357,6 +376,12 @@ components:
               type: number
               description: latitude
               example: -25.3144846
+        color:
+          type: string
+          enum:
+            - black
+            - blue
+            - red
 
     customer_detail:
       description: Details of the customer.

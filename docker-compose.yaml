@@ -1,19 +1,44 @@
 version: '3'
 
 services:
+  fluentbit:
+    container_name: fluentbit
+    build: ./fluentbit
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    networks:
+      - es-net
   redis:
     image: redis:latest
-    platform: linux/arm64/v8
+    platform: linux/amd64
     command: redis-server --requirepass ${REDIS_PASSWORD}
+    depends_on:
+      - fluentbit
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "fluentbit"
+        mode: "non-blocking"
+        max-buffer-size: "2m"
     ports:
       - ${REDIS_PORT}:${REDIS_PORT}
     networks:
-      - data-api
+      - es-net
+    
   db:
     image: postgis/postgis:13-3.2-alpine
     platform: linux/amd64
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "fluentbit"
+        mode: "non-blocking"
+        max-buffer-size: "2m"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    depends_on:
+      - fluentbit
     environment:
       - POSTGRES_DB=${POSTGRES_DB:?err}
       - POSTGRES_USER=${POSTGRES_USER}
@@ -22,22 +47,34 @@ services:
     ports:
       - ${POSTGRES_PORT}:${POSTGRES_PORT}
     networks:
-      - data-api
+      - es-net
   mongodb:
     image: mongo:6-focal
     platform: linux/amd64
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "fluentbit"
+        mode: "non-blocking"
+        max-buffer-size: "2m"
     volumes:
       - mongodb_data:/data/db
       - mongo-init-db:/docker-entrypoint-initdb.d
     environment:
       - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
+    depends_on:
+      - fluentbit
     ports:
       - ${MONGO_PORT}:${MONGO_PORT}
     networks:
-      - data-api
+      - es-net
   mongo-express:
     image: mongo-express:0.54.0
-    platform: linux/arm64/v8
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "fluentbit"
+    platform: linux/amd64
     environment:
       - ME_CONFIG_BASICAUTH_USERNAME=${ME_CONFIG_BASICAUTH_USERNAME}
       - ME_CONFIG_BASICAUTH_PASSWORD=${ME_CONFIG_BASICAUTH_PASSWORD}
@@ -45,12 +82,17 @@ services:
     ports:
       - 8443:8081
     depends_on:
+      - fluentbit
       - mongodb
     networks:
-      - data-api
+      - es-net
   web:
     build: .
     platform: linux/amd64
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "fluentbit"
     command: >
       sh -c "yes | python /app/manage.py makemigrations &&
              yes | python /app/manage.py migrate &&
@@ -68,34 +110,50 @@ services:
     ports:
       - ${DJANGO_PORT}:${DJANGO_PORT}
     depends_on:
+      - fluentbit
       - db
       - redis
       - mongodb
       - rabbitmq
     networks:
-      - data-api
+      - es-net
   adminer:
     image: adminer
-    platform: linux/arm64/v8
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "fluentbit"
+    platform: linux/amd64
+    depends_on:
+      - fluentbit
     ports:
       - ${ADMINER_PORT}:${ADMINER_PORT}
     networks:
-      - data-api
+      - es-net
   rabbitmq:
-    #container_name: "rabbitmq"
     image: rabbitmq:3-management-alpine
-    platform: linux/arm64/v8
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "fluentbit"
+    platform: linux/amd64
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
       - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
+    depends_on:
+      - fluentbit
     ports:
       - ${RABBITMQ_PORTS_1}:${RABBITMQ_PORTS_1}
       - ${RABBITMQ_PORTS_2}:${RABBITMQ_PORTS_2}
     networks:
-      - data-api
+      - es-net
   celery:
     build: .
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "fluentbit"
     platform: linux/amd64
     command: celery -A core worker -l info -P threads --autoscale=10,3 -E --uid nobody
     volumes:
@@ -104,14 +162,23 @@ services:
       - DEBUG=${CELERY_DEBUG}
       - CELERY_BROKER_URL=amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@${RABBITMQ_DEFAULT_HOST}:${RABBITMQ_PORTS_1}
     depends_on:
+      - fluentbit
       - web
       - rabbitmq
     networks:
-      - data-api
+      - es-net
   swagger-ui:
     image: swaggerapi/swagger-ui
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "fluentbit"
     platform: linux/amd64
     container_name: swagger_ui_container
+    networks:
+      - es-net
+    depends_on:
+      - fluentbit
     ports:
       - "8181:8080"
     volumes:
@@ -125,4 +192,5 @@ volumes:
   mongo-init-db:
 
 networks:
-  data-api:
+  es-net:
+    name: es-net
