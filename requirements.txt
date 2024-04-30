@@ -32,7 +32,7 @@ drf-extra-fields==3.2.1
 entrypoints==0.4
 executing==0.8.3
 hiredis==2.0.0
-idna==3.3
+idna==3.7
 importlib-metadata==4.10.1
 importlib-resources==5.4.0
 inflection==0.5.1
