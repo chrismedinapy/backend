@@ -6,7 +6,7 @@ from data.utils.exceptions import DuplicatedRecord, InvalidOperation
 class CustomerInputQuerySet(models.QuerySet):
 
     def get_all(self):
-        return self.filter(status=Status.Active.value)
+        return self.filter(status=Status.ACTIVE.value)
 
     def get_by_code(self, customer_input_code):
         return self.filter(status=Status.ACTIVE.value, customer_input_code=customer_input_code).first()
