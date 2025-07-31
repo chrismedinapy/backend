@@ -39,10 +39,11 @@ class UserLogic():
             raise EntityNotFound(
                 f"User with code: {user_code} not found"
             )
+        return user
 
     def update(self, user_code, user_data, user_token):
         user = models.User.objects.get_user_by_code(user_code)
-        if __verify_ownership(user_code, user_token):
+        if self.__verify_ownership(user_code, user_token):
             user.username = user_data.get("username")
             user.name = user_data.get("name")
             user.phone_number = user_data.get("phone_number")
