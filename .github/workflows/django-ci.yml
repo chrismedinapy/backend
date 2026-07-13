@@ -96,13 +96,16 @@ jobs:
           set +e
           coverage erase
           coverage run --source=core,data,middleware manage.py test --verbosity=2 > /tmp/django-tests.log 2>&1
-          status=$?
+          test_status=$?
+          set -e
+
           echo "===== Django test output ====="
           tail -n 250 /tmp/django-tests.log
           echo "===== Coverage report ====="
           coverage report --show-missing
           coverage xml
-          exit $status
+
+          exit "$test_status"
 
       - name: Upload coverage report
         if: success()
