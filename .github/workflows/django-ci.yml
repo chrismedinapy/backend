@@ -22,7 +22,7 @@ env:
 
 jobs:
   django-check:
-    name: Django system and migration checks
+    name: Django system, migration and test checks
     runs-on: ubuntu-22.04
     timeout-minutes: 30
 
@@ -88,3 +88,6 @@ jobs:
 
       - name: Show migration plan
         run: python manage.py showmigrations --plan
+
+      - name: Run Django test suite
+        run: python manage.py test --verbosity=2
