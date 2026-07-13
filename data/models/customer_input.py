@@ -7,7 +7,7 @@ from data.models.update_created import UpdatedCreated
 
 class CustomerInput(UpdatedCreated):
     customer_input_code = models.UUIDField(
-        primary_key=True, default=str(uuid.uuid4()))
+        primary_key=True, default=uuid.uuid4)
     customer_code = models.UUIDField(blank=True, null=True)
     retail_store = models.ForeignKey(
         RetailStore, on_delete=models.CASCADE, blank=True, null=True)
