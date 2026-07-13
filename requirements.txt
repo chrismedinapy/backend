@@ -5,7 +5,7 @@ asttokens==2.0.5
 attrs==21.4.0
 autopep8==1.6.0
 backcall==0.2.0
-backports.zoneinfo==0.2.1
+backports.zoneinfo==0.2.1; python_version < "3.9"
 billiard==3.6.4.0
 black==24.3.0
 celery==5.2.7
