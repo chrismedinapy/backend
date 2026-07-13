@@ -22,9 +22,24 @@ env:
 
 jobs:
   django-check:
-    name: Django system check
+    name: Django system and migration checks
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+
+    services:
+      postgis:
+        image: postgis/postgis:13-3.2-alpine
+        env:
+          POSTGRES_DB: core_test
+          POSTGRES_USER: core
+          POSTGRES_PASSWORD: core
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U core -d core_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Check out repository
@@ -59,3 +74,12 @@ jobs:
 
       - name: Run Django system check
         run: python manage.py check
+
+      - name: Check for missing migrations
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Apply database migrations
+        run: python manage.py migrate --noinput
+
+      - name: Show migration plan
+        run: python manage.py showmigrations --plan
