@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('uptated_at', models.DateTimeField(auto_now=True)),
-                ('customer_code', models.UUIDField(default='8893a54b-1af7-48cf-8794-6c127ab7a3c6', primary_key=True, serialize=False)),
+                ('customer_code', models.UUIDField(default=uuid.uuid4, primary_key=True, serialize=False)),
                 ('customer_name', models.CharField(max_length=200)),
                 ('customer_description', models.TextField(max_length=1000)),
                 ('status', models.IntegerField()),
@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('uptated_at', models.DateTimeField(auto_now=True)),
-                ('product_code', models.UUIDField(default='c5b3b548-308b-4c7e-b77d-af638d35e44a', primary_key=True, serialize=False)),
+                ('product_code', models.UUIDField(default=uuid.uuid4, primary_key=True, serialize=False)),
                 ('product_name', models.CharField(max_length=200)),
                 ('product_description', models.TextField(max_length=1000)),
                 ('status', models.IntegerField()),
@@ -81,7 +81,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('uptated_at', models.DateTimeField(auto_now=True)),
-                ('customer_user_group_code', models.UUIDField(default='60bb2aeb-6158-4748-94e7-27c1147d4099', editable=False, primary_key=True, serialize=False)),
+                ('customer_user_group_code', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('date_join', models.DateTimeField(auto_now_add=True)),
                 ('status', models.IntegerField()),
                 ('user_access_level', models.IntegerField()),
@@ -97,7 +97,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('uptated_at', models.DateTimeField(auto_now=True)),
-                ('customer_input_code', models.UUIDField(default='78ecffef-43e8-4b15-a4a9-0b88256c05ff', primary_key=True, serialize=False)),
+                ('customer_input_code', models.UUIDField(default=uuid.uuid4, primary_key=True, serialize=False)),
                 ('customer_code', models.UUIDField(blank=True, null=True)),
                 ('status', models.IntegerField()),
                 ('customer_csv_uploaded_name', models.CharField(blank=True, max_length=500, null=True)),
