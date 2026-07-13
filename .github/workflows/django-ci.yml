@@ -72,6 +72,9 @@ jobs:
       - name: Verify dependency consistency
         run: python -m pip check
 
+      - name: Validate Python syntax
+        run: python -m compileall -q core data middleware
+
       - name: Run Django system check
         run: python manage.py check
 
