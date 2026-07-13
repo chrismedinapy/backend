@@ -36,7 +36,25 @@ jobs:
           python-version: "3.8"
 
       - name: Validate Python syntax
-        run: python -m compileall core data middleware
+        run: |
+          python - <<'PY'
+          import pathlib
+          import py_compile
+          import sys
+
+          failed = False
+          for root in ("core", "data", "middleware"):
+              for path in pathlib.Path(root).rglob("*.py"):
+                  try:
+                      py_compile.compile(str(path), doraise=True)
+                  except py_compile.PyCompileError as exc:
+                      failed = True
+                      message = str(exc).replace("\n", "%0A")
+                      print(f"::error file={path}::{message}")
+
+          if failed:
+              sys.exit(1)
+          PY
 
   django-check:
     name: Django system, migration and test checks
