@@ -76,7 +76,12 @@ jobs:
         run: python manage.py check
 
       - name: Check for missing migrations
-        run: python manage.py makemigrations --check --dry-run
+        run: |
+          python manage.py makemigrations --dry-run --verbosity 3 | tee /tmp/pending-migrations.log
+          if grep -q '^Migrations for ' /tmp/pending-migrations.log; then
+            echo 'Pending migrations detected.'
+            exit 1
+          fi
 
       - name: Apply database migrations
         run: python manage.py migrate --noinput
