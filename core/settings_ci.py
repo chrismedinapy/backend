@@ -24,7 +24,8 @@ CI_DEFAULTS = {
     "RABBITMQ_DEFAULT_USER": "core",
     "RABBITMQ_DEFAULT_PASS": "core",
     "RABBITMQ_DEFAULT_VHOST": "/",
-    "ACCESS__TOKEN_EXPIRE_DAYS": "1",
+    "ACCESS_TOKEN_EXPIRE_DAYS": "1",
+    "ALGORITHM": "HS256",
 }
 
 for variable, default_value in CI_DEFAULTS.items():
