@@ -90,4 +90,9 @@ jobs:
         run: python manage.py showmigrations --plan
 
       - name: Run Django test suite
-        run: python manage.py test --verbosity=2
+        run: |
+          set +e
+          python manage.py test --verbosity=2 > /tmp/django-tests.log 2>&1
+          status=$?
+          tail -n 200 /tmp/django-tests.log
+          exit $status
