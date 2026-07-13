@@ -102,7 +102,7 @@ jobs:
           echo "===== Django test output ====="
           tail -n 250 /tmp/django-tests.log
           echo "===== Coverage report ====="
-          coverage report --show-missing
+          coverage report --show-missing --fail-under=70
           coverage xml
 
           exit "$test_status"
