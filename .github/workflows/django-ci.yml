@@ -86,7 +86,24 @@ jobs:
           fi
 
       - name: Apply database migrations
-        run: python manage.py migrate --noinput --verbosity=1
+        id: migrations
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          python manage.py migrate --noinput --verbosity=3 2>&1 | tee /tmp/django-migrate.log
+
+      - name: Upload migration failure log
+        if: steps.migrations.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: django-migration-failure-log
+          path: /tmp/django-migrate.log
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Fail when migrations fail
+        if: steps.migrations.outcome == 'failure'
+        run: exit 1
 
       - name: Show migration plan
         run: python manage.py showmigrations --plan
