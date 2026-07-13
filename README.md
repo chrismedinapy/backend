@@ -9,6 +9,7 @@
   - [Requirements.](#requirements)
   - [RunServer.](#runserver)
     - [Used ports.](#used-ports)
+  - [CI roadmap.](#ci-roadmap)
   - [Diagrams.](#diagrams)
 
 ## Introduction.
@@ -98,6 +99,24 @@ docker-compose --env-file .env up --build
 |  MONGO-EXPRESS | 8443 |
 | MONGO | 27017 |
 | POSTGRES | 5432 |
+
+## CI roadmap.
+
+The CI platform is being introduced incrementally in `release/django-5-ci`. Each pull request adds one independently verifiable capability before the release is promoted to `main`.
+
+- [x] Install the Python 3.8 dependency baseline.
+- [x] Validate dependency consistency with `pip check`.
+- [x] Run Django system checks with isolated CI settings.
+- [ ] Validate PostGIS connectivity and database migrations.
+- [ ] Run the Django test suite.
+- [ ] Upgrade the runtime to Python 3.12.
+- [ ] Upgrade the framework to Django 5.2 LTS.
+- [ ] Validate Redis integration.
+- [ ] Validate MongoDB integration.
+- [ ] Validate RabbitMQ integration.
+- [ ] Run Celery integration tests.
+- [ ] Validate the production Docker image build.
+- [ ] Add coverage reporting and quality gates.
 
 ## Diagrams.
 
