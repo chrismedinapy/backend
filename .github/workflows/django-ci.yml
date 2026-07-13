@@ -22,7 +22,7 @@ env:
 
 jobs:
   django-check:
-    name: Django system, migration and test checks
+    name: Django system, migration, test and coverage checks
     runs-on: ubuntu-22.04
     timeout-minutes: 30
 
@@ -67,7 +67,9 @@ jobs:
           python -m pip --version
 
       - name: Install Python dependencies
-        run: python -m pip install --quiet -r requirements.txt
+        run: |
+          python -m pip install --quiet -r requirements.txt
+          python -m pip install --quiet "coverage==7.6.1"
 
       - name: Verify dependency consistency
         run: python -m pip check
@@ -89,11 +91,24 @@ jobs:
       - name: Show migration plan
         run: python manage.py showmigrations --plan
 
-      - name: Run Django test suite
+      - name: Run Django test suite with coverage
         run: |
           set +e
-          python manage.py test --verbosity=2 > /tmp/django-tests.log 2>&1
+          coverage erase
+          coverage run --source=core,data,middleware manage.py test --verbosity=2 > /tmp/django-tests.log 2>&1
           status=$?
           echo "===== Django test output ====="
           tail -n 250 /tmp/django-tests.log
+          echo "===== Coverage report ====="
+          coverage report --show-missing
+          coverage xml
           exit $status
+
+      - name: Upload coverage report
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: django-coverage-xml
+          path: coverage.xml
+          if-no-files-found: error
+          retention-days: 14
