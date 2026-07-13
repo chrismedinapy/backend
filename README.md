@@ -110,8 +110,8 @@ The CI platform is being introduced incrementally in `release/django-5-ci`. Each
 - [x] Run Django system checks with isolated CI settings.
 - [x] Validate PostGIS connectivity and database migrations.
 - [x] Run the Django test suite.
-- [ ] Add coverage reporting and quality gates.
-- [ ] Run the Django test suite.
+- [x] Add coverage reporting and publish `coverage.xml` as a workflow artifact.
+- [ ] Define a minimum coverage quality gate.
 - [ ] Upgrade the runtime to Python 3.12.
 - [ ] Upgrade the framework to Django 5.2 LTS.
 - [ ] Validate Redis integration.
@@ -130,10 +130,14 @@ python manage.py check
 python manage.py makemigrations --dry-run --verbosity 3
 python manage.py migrate --noinput --verbosity=1
 python manage.py showmigrations --plan
-python manage.py test --verbosity=2
+coverage run --source=core,data,middleware manage.py test --verbosity=2
+coverage report --show-missing
+coverage xml
 ```
 
-This verifies dependency consistency, Django configuration, PostGIS connectivity, migration integrity and the existing Django test suite in an isolated CI environment.
+This verifies dependency consistency, Django configuration, PostGIS connectivity, migration integrity, the existing Django test suite and line coverage in an isolated CI environment.
+
+The first recorded CI coverage baseline is **71.36%**, with 1,111 covered lines out of 1,557 measured lines. The XML report is retained as a GitHub Actions artifact for 14 days. No minimum coverage threshold is enforced yet.
 
 ## Diagrams.
 
