@@ -111,6 +111,7 @@ The CI platform is being introduced incrementally in `release/django-5-ci`. Each
 - [x] Validate PostGIS connectivity and database migrations.
 - [x] Run the Django test suite.
 - [ ] Add coverage reporting and quality gates.
+- [ ] Run the Django test suite.
 - [ ] Upgrade the runtime to Python 3.12.
 - [ ] Upgrade the framework to Django 5.2 LTS.
 - [ ] Validate Redis integration.
