@@ -107,7 +107,7 @@ The CI platform is being introduced incrementally in `release/django-5-ci`. Each
 - [x] Install the Python 3.8 dependency baseline.
 - [x] Validate dependency consistency with `pip check`.
 - [x] Run Django system checks with isolated CI settings.
-- [ ] Validate PostGIS connectivity and database migrations.
+- [x] Validate PostGIS connectivity and database migrations.
 - [ ] Run the Django test suite.
 - [ ] Upgrade the runtime to Python 3.12.
 - [ ] Upgrade the framework to Django 5.2 LTS.
