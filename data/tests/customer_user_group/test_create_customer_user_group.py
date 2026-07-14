@@ -2,7 +2,6 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from data.logic.user import UserLogic
 from data.tests.helper.authorization_helper import http_authorization_setup_by_current_user
-)
 from data.tests.mock.user_login import new_user_mock, another_user_mock
 from data.tests.mock.customer import customer_mock
 from data.tests.seeders.seed_customer import seed_customer

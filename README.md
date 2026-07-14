@@ -9,6 +9,8 @@
   - [Requirements.](#requirements)
   - [RunServer.](#runserver)
     - [Used ports.](#used-ports)
+  - [CI roadmap.](#ci-roadmap)
+    - [Current CI validation.](#current-ci-validation)
   - [Diagrams.](#diagrams)
 
 ## Introduction.
@@ -99,6 +101,44 @@ docker-compose --env-file .env up --build
 | MONGO | 27017 |
 | POSTGRES | 5432 |
 
+## CI roadmap.
+
+The CI platform is being introduced incrementally in `release/django-5-ci`. Each pull request adds one independently verifiable capability before the release is promoted to `main`.
+
+- [x] Install the Python 3.8 dependency baseline.
+- [x] Validate dependency consistency with `pip check`.
+- [x] Run Django system checks with isolated CI settings.
+- [x] Validate PostGIS connectivity and database migrations.
+- [x] Run the Django test suite.
+- [x] Add coverage reporting and publish `coverage.xml` as a workflow artifact.
+- [x] Enforce a minimum total coverage quality gate of 70%.
+- [ ] Upgrade the runtime to Python 3.12.
+- [ ] Upgrade the framework to Django 5.2 LTS.
+- [ ] Validate Redis integration.
+- [ ] Validate MongoDB integration.
+- [ ] Validate RabbitMQ integration.
+- [ ] Run Celery integration tests.
+- [ ] Validate the production Docker image build.
+
+### Current CI validation.
+
+The GitHub Actions workflow currently performs the following checks for pull requests and pushes targeting `release/django-5-ci`:
+
+```bash
+python -m pip check
+python manage.py check
+python manage.py makemigrations --dry-run --verbosity 3
+python manage.py migrate --noinput --verbosity=1
+python manage.py showmigrations --plan
+coverage run --source=core,data,middleware manage.py test --verbosity=2
+coverage report --show-missing --fail-under=70
+coverage xml
+```
+
+This verifies dependency consistency, Django configuration, PostGIS connectivity, migration integrity, the existing Django test suite and line coverage in an isolated CI environment.
+
+The first recorded CI coverage baseline is **71.36%**, with 1,111 covered lines out of 1,557 measured lines. CI now requires total measured coverage to remain at or above **70%**, preventing silent coverage regressions while preserving a small buffer below the current baseline. The XML report is retained as a GitHub Actions artifact for 14 days.
+
 ## Diagrams.
 
 In the following image, we can see the flow when the user loads a CSV file.
@@ -107,11 +147,11 @@ In the following image, we can see the flow when the user loads a CSV file.
 
  1. The user loads the CSV file through the service.
      1. The service generates a hash for each file it receives and saves it as metadata, then compares if the hash already exists in the database, if so, it sends an error saying that the file has already been uploaded.
-  2. It saves metadata of the file and the user.
-  3. Saves the CSV file to a file system.
-  4. Celery creates an asynchronous job and passes it to the broker.
-  5. The worker checks if there are jobs in the broker.
-  6. The worker generates a data frame from the data inside the CSV file, this data frame is stored in the mongo database, and more metadata is added to the Postgres database.
+   2. It saves metadata of the file and the user.
+   3. Saves the CSV file to a file system.
+   4. Celery creates an asynchronous job and passes it to the broker.
+   5. The worker checks if there are jobs in the broker.
+   6. The worker generates a data frame from the data inside the CSV file, this data frame is stored in the mongo database, and more metadata is added to the Postgres database.
 
 Below is a description of the flow when the user requests a report.
 
