@@ -161,13 +161,14 @@ jobs:
 
           payload = {"name": "rabbitmq-ci", "status": "ready"}
           queue_name = "ci-rabbitmq-integration"
+          exchange_name = "ci-rabbitmq-integration"
 
           assert app.conf.broker_url, "Celery broker URL is not configured"
 
           with app.connection_for_write() as connection:
               connection.ensure_connection(max_retries=3)
               channel = connection.channel()
-              exchange = Exchange("", type="direct")
+              exchange = Exchange(exchange_name, type="direct", durable=False, auto_delete=True)
               queue = Queue(
                   queue_name,
                   exchange=exchange,
@@ -193,6 +194,7 @@ jobs:
                   message.ack()
               finally:
                   queue.delete(if_unused=False, if_empty=False)
+                  exchange.bind(channel).delete(if_unused=False)
                   channel.close()
 
           print("RabbitMQ integration validated through Celery broker configuration")
