@@ -43,6 +43,16 @@ jobs:
           --health-timeout 5s
           --health-retries 10
 
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -78,6 +88,19 @@ jobs:
 
       - name: Run Django system check
         run: python manage.py check
+
+      - name: Validate Redis cache integration
+        run: |
+          python manage.py shell -c '
+          from django.core.cache import cache
+          key = "ci:redis:integration"
+          value = "redis-is-ready"
+          cache.set(key, value, timeout=60)
+          assert cache.get(key) == value, "Redis cache value did not round-trip"
+          cache.delete(key)
+          assert cache.get(key) is None, "Redis cache key was not deleted"
+          print("Redis cache integration validated")
+          '
 
       - name: Check for missing migrations
         run: |
