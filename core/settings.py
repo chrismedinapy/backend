@@ -112,14 +112,18 @@ WSGI_APPLICATION = "core.wsgi.application"
 #        'NAME': BASE_DIR / 'db.sqlite3',
 #    }
 # }
-REDIS_PASSWORD = config("REDIS_PASSWORD")
+REDIS_PASSWORD = config("REDIS_PASSWORD", default="")
 REDIS_HOST = config("REDIS_HOST")
 REDIS_PORT = config("REDIS_PORT")
+REDIS_LOCATION = (
+    f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}"
+    if REDIS_PASSWORD
+    else f"redis://{REDIS_HOST}:{REDIS_PORT}"
+)
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        # 'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}',
-        "LOCATION": f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}",
+        "LOCATION": REDIS_LOCATION,
     }
 }
 
