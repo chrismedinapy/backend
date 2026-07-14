@@ -153,18 +153,18 @@ jobs:
           print("MongoDB integration validated")
           PY
 
-      - name: Validate RabbitMQ integration
+      - name: Validate RabbitMQ integration through Celery configuration
         run: |
           python - <<'PY'
-          from kombu import Connection, Exchange, Producer, Queue
+          from core.celery import app
+          from kombu import Exchange, Producer, Queue
 
           payload = {"name": "rabbitmq-ci", "status": "ready"}
           queue_name = "ci-rabbitmq-integration"
 
-          with Connection(
-              "amqp://core:core@localhost:5672//",
-              connect_timeout=5,
-          ) as connection:
+          assert app.conf.broker_url, "Celery broker URL is not configured"
+
+          with app.connection_for_write() as connection:
               connection.ensure_connection(max_retries=3)
               channel = connection.channel()
               exchange = Exchange("", type="direct")
@@ -195,7 +195,7 @@ jobs:
                   queue.delete(if_unused=False, if_empty=False)
                   channel.close()
 
-          print("RabbitMQ integration validated")
+          print("RabbitMQ integration validated through Celery broker configuration")
           PY
 
       - name: Check for missing migrations
