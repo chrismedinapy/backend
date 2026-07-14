@@ -25,7 +25,7 @@ CI_DEFAULTS = {
     "POSTGRES_HOST_AUTH_METHOD": "trust",
     "REDIS_HOST": "localhost",
     "REDIS_PORT": "6379",
-    "REDIS_PASSWORD": "ci-redis-password",
+    "REDIS_PASSWORD": "",
     "MONGO_INITDB_DATABASE": "core_test",
     "MONGO_HOST": "localhost",
     "MONGO_PORT": "27017",
