@@ -157,45 +157,26 @@ jobs:
         run: |
           python - <<'PY'
           from core.celery import app
-          from kombu import Exchange, Producer, Queue
 
           payload = {"name": "rabbitmq-ci", "status": "ready"}
           queue_name = "ci-rabbitmq-integration"
-          exchange_name = "ci-rabbitmq-integration"
 
           assert app.conf.broker_url, "Celery broker URL is not configured"
 
           with app.connection_for_write() as connection:
               connection.ensure_connection(max_retries=3)
-              channel = connection.channel()
-              exchange = Exchange(exchange_name, type="direct", durable=False, auto_delete=True)
-              queue = Queue(
+              queue = connection.SimpleQueue(
                   queue_name,
-                  exchange=exchange,
-                  routing_key=queue_name,
-                  durable=False,
-                  auto_delete=True,
-              ).bind(channel)
-
+                  no_ack=False,
+                  queue_opts={"durable": False, "auto_delete": True},
+              )
               try:
-                  queue.declare()
-                  producer = Producer(channel, serializer="json")
-                  producer.publish(
-                      payload,
-                      exchange=exchange,
-                      routing_key=queue_name,
-                      declare=[queue],
-                      retry=True,
-                  )
-
-                  message = queue.get(no_ack=False)
-                  assert message is not None, "RabbitMQ did not return a message"
+                  queue.put(payload, serializer="json")
+                  message = queue.get(block=True, timeout=5)
                   assert message.payload == payload, "RabbitMQ message did not round-trip"
                   message.ack()
               finally:
-                  queue.delete(if_unused=False, if_empty=False)
-                  exchange.bind(channel).delete(if_unused=False)
-                  channel.close()
+                  queue.close()
 
           print("RabbitMQ integration validated through Celery broker configuration")
           PY
