@@ -156,27 +156,45 @@ jobs:
       - name: Validate RabbitMQ integration
         run: |
           python - <<'PY'
-          from kombu import Connection
+          from kombu import Connection, Exchange, Producer, Queue
 
           payload = {"name": "rabbitmq-ci", "status": "ready"}
+          queue_name = "ci-rabbitmq-integration"
+
           with Connection(
-              hostname="localhost",
-              port=5672,
-              userid="core",
-              password="core",
-              virtual_host="/",
+              "amqp://core:core@localhost:5672//",
               connect_timeout=5,
           ) as connection:
               connection.ensure_connection(max_retries=3)
-              queue = connection.SimpleQueue("ci-rabbitmq-integration")
+              channel = connection.channel()
+              exchange = Exchange("", type="direct")
+              queue = Queue(
+                  queue_name,
+                  exchange=exchange,
+                  routing_key=queue_name,
+                  durable=False,
+                  auto_delete=True,
+              ).bind(channel)
+
               try:
-                  queue.put(payload, serializer="json")
-                  message = queue.get(block=True, timeout=5)
+                  queue.declare()
+                  producer = Producer(channel, serializer="json")
+                  producer.publish(
+                      payload,
+                      exchange=exchange,
+                      routing_key=queue_name,
+                      declare=[queue],
+                      retry=True,
+                  )
+
+                  message = queue.get(no_ack=False)
+                  assert message is not None, "RabbitMQ did not return a message"
                   assert message.payload == payload, "RabbitMQ message did not round-trip"
                   message.ack()
               finally:
-                  queue.queue.delete()
-                  queue.close()
+                  queue.delete(if_unused=False, if_empty=False)
+                  channel.close()
+
           print("RabbitMQ integration validated")
           PY
 
