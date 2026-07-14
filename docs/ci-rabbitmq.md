@@ -2,7 +2,7 @@
 
 ## Status
 
-The Django CI workflow starts a RabbitMQ broker and validates a complete message round trip before migrations and tests run.
+The Django CI workflow starts a RabbitMQ broker and verifies that the project's real Celery configuration can authenticate and establish an AMQP connection before migrations and tests run.
 
 ## Service configuration
 
@@ -34,17 +34,20 @@ This prevents the application-level validation from starting while the broker is
 
 ## Integration validation
 
-The project already depends on `kombu` through Celery. CI uses that dependency to:
+CI imports `core.celery.app`, loads `CELERY_BROKER_URL` through `core.settings_ci` and `core.settings`, and opens a write connection with:
 
-1. connect to RabbitMQ with the CI credentials;
-2. create the temporary queue `ci-rabbitmq-integration`;
-3. publish a JSON message;
-4. consume the same message;
-5. compare the received payload with the original payload;
-6. acknowledge the message;
-7. delete the temporary queue.
+```python
+with app.connection_for_write(connect_timeout=5) as connection:
+    connection.ensure_connection(max_retries=3)
+```
 
-The validation fails if the connection, publication, consumption, serialization or acknowledgement fails.
+The validation proves that:
+
+1. the project's Celery configuration loads correctly;
+2. the generated broker URL is present;
+3. the installed Celery, Kombu and AMQP packages can use the configured transport;
+4. RabbitMQ accepts the configured user, password and virtual host;
+5. a real TCP and AMQP connection can be established.
 
 ## CI credentials
 
@@ -60,4 +63,4 @@ These values are deterministic test credentials and must not be reused in produc
 
 ## Scope
 
-This check validates the broker and the Python AMQP client stack. It does not yet start a Celery worker or execute an application task. Celery worker and task execution are the next roadmap stage.
+This check validates RabbitMQ broker connectivity through the real Celery application configuration. It intentionally does not publish an application task or start a worker. Publishing, worker consumption and task-result validation belong to the next Celery integration stage, where they can be tested end to end without duplicating Celery's internal messaging implementation.
