@@ -53,6 +53,18 @@ jobs:
           --health-timeout 5s
           --health-retries 10
 
+      mongodb:
+        image: mongo:8.0
+        env:
+          MONGO_INITDB_DATABASE: core_test
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -101,6 +113,30 @@ jobs:
           assert cache.get(key) is None, "Redis cache key was not deleted"
           print("Redis cache integration validated")
           '
+
+      - name: Validate MongoDB integration
+        run: |
+          python - <<'PY'
+          import os
+          from pymongo import MongoClient
+
+          host = os.environ.get("MONGO_HOST", "localhost")
+          port = int(os.environ.get("MONGO_PORT", "27017"))
+          database_name = os.environ.get("MONGO_INITDB_DATABASE", "core_test")
+
+          client = MongoClient(host=host, port=port, serverSelectionTimeoutMS=5000)
+          client.admin.command("ping")
+
+          collection = client[database_name]["ci_integration"]
+          marker = {"name": "mongodb-ci", "status": "ready"}
+          result = collection.insert_one(marker)
+          stored = collection.find_one({"_id": result.inserted_id})
+          assert stored is not None and stored["status"] == "ready", "MongoDB document did not round-trip"
+          collection.delete_one({"_id": result.inserted_id})
+          assert collection.find_one({"_id": result.inserted_id}) is None, "MongoDB document was not deleted"
+          client.close()
+          print("MongoDB integration validated")
+          PY
 
       - name: Check for missing migrations
         run: |
