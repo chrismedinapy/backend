@@ -32,6 +32,7 @@ The Django CI pipeline now validates the following stack:
 - Django 5.2.16 LTS;
 - PostgreSQL 14 with PostGIS 3.2;
 - Redis 7.4 cache connectivity and operations;
+- MongoDB 8.0 connectivity and CRUD operations;
 - dependency consistency through `pip check`;
 - Django system checks;
 - migration generation and application;
@@ -53,13 +54,14 @@ coverage xml
 ```
 
 Redis integration details are documented in [`docs/ci-redis.md`](ci-redis.md).
+MongoDB integration details are documented in [`docs/ci-mongodb.md`](ci-mongodb.md).
 
 ## Roadmap
 
 - [x] Upgrade the CI runtime to Python 3.12.
 - [x] Upgrade the framework to Django 5.2 LTS.
 - [x] Validate Redis integration.
-- [ ] Validate MongoDB integration.
+- [x] Validate MongoDB integration.
 - [ ] Validate RabbitMQ integration.
 - [ ] Run Celery integration tests.
 - [ ] Validate the production Docker image build.
