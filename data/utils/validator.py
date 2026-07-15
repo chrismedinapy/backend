@@ -38,7 +38,8 @@ def body_validator(data, serializer):
     if not body_serialized.is_valid():
         message = body_serialized.errors
         raise InvalidParameter(message)
-    return body_serialized.data
+    return body_serialized.validated_data
+
 
 def uuid_validator(value):
     try:
@@ -46,6 +47,7 @@ def uuid_validator(value):
     except ValueError:
         raise InvalidParameter(
             "uuid is invalid.")
+
 
 def csv_validator(file):
     try:
@@ -55,6 +57,7 @@ def csv_validator(file):
             raise FileNotSupported(f"File: {file.name} format is not supported.")
     except:
         raise FileNotSupported(f"Format is not supported.")
+
 
 @deconstructible
 class MyUsernameValidator(validators.RegexValidator):
