@@ -39,7 +39,7 @@ Django REST API
     └── RabbitMQ 4                asynchronous task broker
 ```
 
-The CI workflows validate each infrastructure dependency, exercise the complete Celery publication and worker-execution path, and build and smoke-test the real application Docker image.
+The CI workflows validate each infrastructure dependency independently, exercise the complete Celery publication and worker-execution path, and build the real application Docker image.
 
 ## Technology baseline
 
@@ -53,7 +53,7 @@ The CI workflows validate each infrastructure dependency, exercise the complete 
 | Redis | 7.4 |
 | RabbitMQ | 4.x |
 | Celery | 5.4.0 |
-| Application image | Python 3.12 slim on Debian Bookworm |
+| Application image | Python 3.12 on Debian Bookworm |
 | Coverage gate | Minimum 70% total measured coverage |
 | CI runner | Ubuntu 22.04 |
 
@@ -155,6 +155,13 @@ Two GitHub Actions workflows protect pull requests targeting the permanent branc
 
 - `Django CI baseline` validates the application and service integrations;
 - `Production Docker image` builds and smoke-tests the application container.
+
+These workflows are complementary, not duplicates. A normal pull request into `release` or `main` is expected to display exactly two primary checks:
+
+```text
+Django system, migration, test and coverage checks
+Build and smoke test production image
+```
 
 The Django workflow runs for pull requests and pushes targeting `release` and `main`. The image workflow runs for pull requests targeting `release` or `main`, pushes to `main`, and manual executions. It intentionally skips pushes to `release` to avoid rerunning the same image build immediately after a successful feature PR.
 
@@ -263,7 +270,7 @@ Detailed CI notes are maintained in the `docs` directory:
 - [Celery end-to-end integration](docs/ci-celery.md)
 - [Production Docker image validation](docs/ci-docker-image.md)
 
-These documents describe the tested architecture, settings, assertions, diagnostics, guarantees, and known scope boundaries.
+These documents describe the tested architecture, settings, assertions, diagnostics, guarantees, trigger behavior and known scope boundaries.
 
 ## Current roadmap
 
