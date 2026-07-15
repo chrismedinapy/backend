@@ -171,52 +171,34 @@ jobs:
 
       - name: Validate end-to-end Celery task execution
         run: |
-          set -euo pipefail
-
-          celery -A core worker \
-            --loglevel=INFO \
-            --pool=solo \
-            --concurrency=1 \
-            --without-gossip \
-            --without-mingle \
-            --without-heartbeat \
-            --include=core.ci_tasks \
-            > /tmp/celery-worker.log 2>&1 &
-          worker_pid=$!
-
-          cleanup() {
-            kill "$worker_pid" 2>/dev/null || true
-            wait "$worker_pid" 2>/dev/null || true
-            echo "===== Celery worker output ====="
-            tail -n 200 /tmp/celery-worker.log || true
-          }
-          trap cleanup EXIT
-
           python - <<'PY'
-          import time
+          from celery.contrib.testing.worker import start_worker
 
           from core.celery import app
-
-          deadline = time.monotonic() + 20
-          while time.monotonic() < deadline:
-              replies = app.control.ping(timeout=1)
-              if replies:
-                  print(f"Celery worker is ready: {replies}")
-                  break
-              time.sleep(1)
-          else:
-              raise RuntimeError("Celery worker did not become ready")
-          PY
-
-          python - <<'PY'
           from core.ci_tasks import ci_healthcheck
 
           expected = {
               "received": "celery-is-ready",
               "status": "processed",
           }
-          result = ci_healthcheck.delay("celery-is-ready")
-          output = result.get(timeout=20)
+
+          assert "core.ci_healthcheck" in app.tasks, (
+              "CI healthcheck task was not registered in the Celery app"
+          )
+          assert app.conf.result_backend == "redis://localhost:6379/1", (
+              f"Unexpected Celery result backend: {app.conf.result_backend!r}"
+          )
+
+          with start_worker(
+              app,
+              pool="solo",
+              concurrency=1,
+              perform_ping_check=False,
+              loglevel="INFO",
+          ):
+              result = ci_healthcheck.delay("celery-is-ready")
+              output = result.get(timeout=20)
+
           assert output == expected, f"Unexpected Celery task result: {output!r}"
           print(f"Celery task executed successfully with result={output}")
           PY
