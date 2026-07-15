@@ -39,7 +39,7 @@ Django REST API
     └── RabbitMQ 4                asynchronous task broker
 ```
 
-The CI workflows validate each infrastructure dependency independently, exercise the Celery publication and worker-execution path, validate a real asynchronous CSV-ingestion business flow, and build the real application Docker image.
+The CI workflow validates each infrastructure dependency independently and also exercises the complete Celery publication and worker-execution path.
 
 ## Technology baseline
 
@@ -53,7 +53,6 @@ The CI workflows validate each infrastructure dependency independently, exercise
 | Redis | 7.4 |
 | RabbitMQ | 4.x |
 | Celery | 5.4.0 |
-| Application image | Python 3.12 on Debian Bookworm |
 | Coverage gate | Minimum 70% total measured coverage |
 | CI runner | Ubuntu 22.04 |
 
@@ -134,38 +133,16 @@ The isolated CI configuration can be exercised locally with:
 DJANGO_SETTINGS_MODULE=core.settings_ci python manage.py check
 ```
 
-### 5. Build and smoke-test the application image
-
-```bash
-docker build --tag datacore:local .
-docker run --rm datacore:local python -m pip check
-docker run --rm \
-  --env DJANGO_SETTINGS_MODULE=core.settings_ci \
-  datacore:local \
-  python manage.py check
-```
-
-The automated image check confirms that the image builds, uses Python 3.12, loads the native GDAL integration, passes Django system checks, and does not contain `.git`, `.github`, or `.env`.
-
-This does not yet validate the complete production deployment topology, registry publishing, image signing, vulnerability scanning, or a production WSGI/ASGI server.
+Production container-image validation is not yet part of the automated baseline, so deployment commands should be treated separately from the CI guarantees described below.
 
 ## Continuous integration
 
-Two GitHub Actions workflows protect pull requests targeting the permanent branches:
+The GitHub Actions workflow runs on pull requests and pushes targeting both permanent branches:
 
-- `Django CI baseline` validates the application and service integrations;
-- `Production Docker image` builds and smoke-tests the application container.
+- `release`;
+- `main`.
 
-These workflows are complementary, not duplicates. A normal pull request into `release` or `main` is expected to display exactly two primary checks:
-
-```text
-Django system, migration, test and coverage checks
-Build and smoke test production image
-```
-
-The Django workflow runs for pull requests and pushes targeting `release` and `main`. The image workflow runs for pull requests targeting `release` or `main`, pushes to `main`, and manual executions. It intentionally skips pushes to `release` to avoid rerunning the same image build immediately after a successful feature PR.
-
-The application checks use the isolated settings module:
+It uses the isolated settings module:
 
 ```text
 DJANGO_SETTINGS_MODULE=core.settings_ci
@@ -173,7 +150,7 @@ DJANGO_SETTINGS_MODULE=core.settings_ci
 
 ### Current CI validation
 
-The workflows currently validate:
+The pipeline currently validates:
 
 - dependency installation and consistency through `pip check`;
 - Django system checks;
@@ -184,17 +161,12 @@ The workflows currently validate:
 - MongoDB connectivity and CRUD operations;
 - RabbitMQ authentication and AMQP connectivity through the real Celery configuration;
 - end-to-end Celery task publication, broker delivery, worker consumption, execution, and Redis marker assertion;
-- a real authenticated CSV-upload business flow across PostgreSQL, file storage, RabbitMQ, Celery and MongoDB GridFS;
 - the complete Django test suite;
 - a minimum total coverage gate of 70%;
 - publication of `coverage.xml` as a workflow artifact;
-- conditional publication of Celery and business-flow diagnostics when a stage fails;
-- construction of the real application Docker image;
-- Python 3.12 and dependency verification inside the image;
-- native GDAL loading and Django system checks inside the container;
-- exclusion of repository metadata and local environment files from the image.
+- conditional publication of Celery worker diagnostics when the job fails.
 
-The core application validation commands include:
+The core validation commands include:
 
 ```bash
 python -m pip check
@@ -208,9 +180,9 @@ coverage report --show-missing --fail-under=70
 coverage xml
 ```
 
-### Celery infrastructure end-to-end check
+### Celery end-to-end check
 
-The deterministic asynchronous infrastructure check exercises this path:
+The asynchronous integration check exercises this real path:
 
 ```text
 core.settings_ci
@@ -222,46 +194,9 @@ core.settings_ci
 → exact marker assertion
 ```
 
-This provides focused regression protection for the Celery, RabbitMQ, and Redis infrastructure contract.
+This provides strong regression protection for the Celery, RabbitMQ, and Redis infrastructure contract. It does not claim to validate every production business task or every application workflow.
 
 `Upload Celery worker diagnostics` intentionally runs only after a failure. Seeing that step as `skipped` on a successful workflow is expected.
-
-### Asynchronous customer-input business-flow check
-
-The application-specific check exercises the real CSV-ingestion path:
-
-```text
-authenticated multipart POST
-→ CustomerInput persisted in PostgreSQL/PostGIS
-→ CSV persisted on the application filesystem
-→ production create_collection task published to RabbitMQ
-→ separate Celery worker
-→ parsed dataset persisted in MongoDB GridFS
-→ gridfs_code persisted back into PostgreSQL
-→ exact data and state assertions
-→ cleanup
-```
-
-This check uses the production endpoint, authentication, validators, business logic and Celery task. It detects regressions that the isolated infrastructure healthcheck cannot detect, including task autodiscovery, endpoint contracts, cross-database persistence and MongoDB connection configuration.
-
-`Upload asynchronous business-flow diagnostics` runs only after a failure and uploads both the worker log and the validation traceback. Seeing it as `skipped` on a successful workflow is expected.
-
-### Production image check
-
-The container workflow exercises this path:
-
-```text
-Dockerfile
-→ python:3.12-slim-bookworm
-→ operating-system GIS/PostgreSQL libraries
-→ requirements.txt installation
-→ pip check
-→ Django GIS/GDAL import
-→ manage.py check inside the image
-→ sensitive-path exclusion assertions
-```
-
-A successful image check means the repository can produce a runnable application container with the validated runtime and native dependencies. It does not by itself certify the complete production deployment.
 
 ## Branch and release workflow
 
@@ -279,7 +214,7 @@ main
 - `release` is the integration and release-candidate branch.
 - `main` contains promoted, reviewed releases.
 - Changes merged independently into `main`, such as dependency maintenance, must be synchronized back into `release` before the next promotion to prevent permanent-branch drift.
-- Both application and production-image checks must pass before a change is promoted between permanent branches.
+- CI must pass before a change is promoted between permanent branches.
 
 ## Technical documentation
 
@@ -289,11 +224,9 @@ Detailed CI notes are maintained in the `docs` directory:
 - [Redis integration](docs/ci-redis.md)
 - [MongoDB integration](docs/ci-mongodb.md)
 - [RabbitMQ integration](docs/ci-rabbitmq.md)
-- [Celery infrastructure end-to-end integration](docs/ci-celery.md)
-- [Asynchronous customer-input business-flow validation](docs/ci-async-business-flow.md)
-- [Production Docker image validation](docs/ci-docker-image.md)
+- [Celery end-to-end integration](docs/ci-celery.md)
 
-These documents describe the tested architecture, settings, assertions, diagnostics, guarantees, trigger behavior and known scope boundaries.
+These documents describe the tested architecture, settings, assertions, diagnostics, guarantees, and known scope boundaries.
 
 ## Current roadmap
 
@@ -305,18 +238,17 @@ Completed:
 - [x] Redis integration checks;
 - [x] MongoDB integration checks;
 - [x] RabbitMQ connectivity through Celery configuration;
-- [x] Celery worker and task infrastructure integration;
-- [x] authenticated asynchronous CSV-ingestion business-flow validation;
+- [x] Celery worker and task end-to-end integration;
 - [x] dependency consistency validation;
 - [x] migration integrity checks;
 - [x] Django test suite and 70% coverage gate;
-- [x] failure diagnostics and workflow artifacts;
-- [x] production Docker image build and container smoke test.
+- [x] failure diagnostics and workflow artifacts.
 
 Next:
 
-- [ ] validate retries, idempotency, scheduled tasks, and production worker concurrency where required;
-- [ ] add container vulnerability scanning, SBOM generation, registry publishing and image signing where required.
+- [ ] validate the production Docker image build;
+- [ ] add an end-to-end asynchronous business-flow test that starts at an API endpoint and verifies a persisted application effect;
+- [ ] validate retries, idempotency, scheduled tasks, and production worker concurrency where required.
 
 ## Diagrams
 

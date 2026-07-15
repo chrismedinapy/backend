@@ -2,7 +2,7 @@
 
 ## Status
 
-The project CI validates the application with Django 5.2.16 LTS on Python 3.12. The Django migration was validated successfully by workflow run #59. The infrastructure baseline, including the end-to-end Celery subsystem check, was validated successfully by workflow run #112. The production Docker image build and container smoke test first passed in `Production Docker image` workflow run #1. The authenticated asynchronous customer-input business flow first passed in Django CI workflow run #137.
+The project CI validates the application with Django 5.2.16 LTS on Python 3.12. The Django migration was validated successfully by workflow run #59. The current infrastructure baseline, including the end-to-end Celery subsystem check, was validated successfully by workflow run #112.
 
 ## What changed
 
@@ -28,12 +28,7 @@ No direct application usages requiring code changes were found during the migrat
 
 ## Current CI baseline
 
-The repository exposes two complementary GitHub Actions checks on pull requests targeting `release` or `main`:
-
-1. application, service integration, migration, test and coverage validation;
-2. production Docker image build and container smoke validation.
-
-Together they validate the following stack and controls:
+The Django CI pipeline validates the following stack:
 
 - Python 3.12;
 - Django 5.2.16 LTS;
@@ -41,25 +36,16 @@ Together they validate the following stack and controls:
 - Redis 7.4 cache connectivity and operations;
 - MongoDB 8.0 connectivity and CRUD operations;
 - RabbitMQ authentication and AMQP connectivity through the real Celery broker configuration;
-- deterministic Celery task publication, queue consumption, worker execution and Redis execution-marker validation;
-- authenticated multipart CSV upload through the real REST endpoint;
-- PostgreSQL metadata persistence and application file storage;
-- production Celery task registration through Django autodiscovery;
-- MongoDB GridFS persistence and propagation of `gridfs_code` back to PostgreSQL;
+- end-to-end Celery task publication, queue consumption, worker execution and Redis execution-marker validation;
 - dependency consistency through `pip check`;
 - Django system checks;
 - migration generation and application;
 - the complete Django test suite;
 - a minimum total coverage gate of 70%;
 - `coverage.xml` publication as a workflow artifact;
-- conditional worker and business-flow diagnostics when a stage fails;
-- production Docker image construction from the real repository `Dockerfile`;
-- Python, dependency, Django and native GDAL smoke checks inside the built image;
-- verification that `.git`, `.github` and `.env` are excluded from the image.
+- conditional Celery worker diagnostics when the job fails.
 
-The deterministic Celery healthcheck isolates the Celery, RabbitMQ and Redis infrastructure contract. The customer-input flow supplements it with a production endpoint, production task and persisted business effects.
-
-The Docker check validates image construction and application startup prerequisites. It does not replace deployment, registry, security-scanning or production-network validation.
+The Celery check is an end-to-end test of the asynchronous infrastructure subsystem. It does not replace application-specific tests for production tasks or complete HTTP-to-database business workflows.
 
 ## Validation commands
 
@@ -85,9 +71,7 @@ docker run --rm \
 Redis integration details are documented in [`docs/ci-redis.md`](ci-redis.md).
 MongoDB integration details are documented in [`docs/ci-mongodb.md`](ci-mongodb.md).
 RabbitMQ integration details are documented in [`docs/ci-rabbitmq.md`](ci-rabbitmq.md).
-Celery infrastructure integration details and RabbitMQ 4 compatibility are documented in [`docs/ci-celery.md`](ci-celery.md).
-The authenticated asynchronous CSV-ingestion workflow is documented in [`docs/ci-async-business-flow.md`](ci-async-business-flow.md).
-Production image build, smoke-test guarantees, trigger behavior and scope boundaries are documented in [`docs/ci-docker-image.md`](ci-docker-image.md).
+Celery integration details, coverage boundaries and RabbitMQ 4 compatibility are documented in [`docs/ci-celery.md`](ci-celery.md).
 
 ## Roadmap
 
@@ -96,8 +80,6 @@ Production image build, smoke-test guarantees, trigger behavior and scope bounda
 - [x] Validate Redis integration.
 - [x] Validate MongoDB integration.
 - [x] Validate RabbitMQ integration through Celery configuration.
-- [x] Run an end-to-end Celery worker and infrastructure task integration test.
-- [x] Validate an authenticated asynchronous customer-input business flow.
-- [x] Validate the production Docker image build and container smoke test.
-- [ ] Validate retries, idempotency, scheduled tasks and production worker concurrency where required.
-- [ ] Add image vulnerability scanning, SBOM generation, registry publishing and signing where required.
+- [x] Run an end-to-end Celery worker and task integration test.
+- [ ] Add an application-specific asynchronous business-flow integration test.
+- [ ] Validate the production Docker image build.

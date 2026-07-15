@@ -2,18 +2,13 @@
 
 ## Status
 
-The Django CI workflow validates the complete asynchronous Celery infrastructure path with real RabbitMQ and Redis services. The deterministic infrastructure implementation was validated successfully by workflow run #112.
+The Django CI workflow validates the complete asynchronous Celery infrastructure path with real RabbitMQ and Redis services. The final implementation was validated successfully by workflow run #112.
 
-The workflow also validates one production asynchronous customer-input flow across the API, PostgreSQL/PostGIS, file storage, RabbitMQ, a separate Celery worker and MongoDB GridFS. That business-flow check first passed in workflow run #137.
+This is an end-to-end test of the Celery subsystem. It is not an end-to-end test of every application business flow.
 
-These checks serve different purposes:
+## Architecture under test
 
-- the deterministic healthcheck isolates the Celery infrastructure contract;
-- the customer-input flow validates one real production endpoint, task and persisted business effect.
-
-## Infrastructure architecture under test
-
-The deterministic integration check exercises this path:
+The integration check exercises this path:
 
 ```text
 core.settings_ci
@@ -49,8 +44,6 @@ CELERY_IMPORTS = ("core.ci_tasks",)
 
 `CELERY_IMPORTS` is required because `core` is the project package rather than a Django application, so normal Celery task autodiscovery does not scan it.
 
-Production tasks in the `data` Django application are registered through `data/tasks.py`, which re-exports the existing implementation from `data/task/create_customer_input_dataset.py`. A normal worker startup can therefore discover the production task without CI-only include arguments.
-
 ## RabbitMQ 4 compatibility
 
 Celery remote control normally creates a `pidbox` queue for commands such as `inspect`, `ping`, `broadcast` and `revoke`.
@@ -63,7 +56,7 @@ CELERY_WORKER_ENABLE_REMOTE_CONTROL = False
 
 This does not disable normal task publication, queue consumption or task execution.
 
-## Deterministic CI task
+## CI task
 
 The deterministic integration task lives in `core/ci_tasks.py`:
 
@@ -81,7 +74,7 @@ def ci_healthcheck(value: str, marker_key: str) -> None:
 
 The task has no PostgreSQL or MongoDB side effects. It writes a short-lived marker to Redis database `1`, which is isolated from the normal Redis cache validation.
 
-## Infrastructure worker configuration
+## Worker configuration
 
 GitHub Actions starts a real worker process with:
 
@@ -96,9 +89,9 @@ celery -A core.celery:app worker \
   --include=core.ci_tasks
 ```
 
-`pool=solo` and concurrency `1` keep execution deterministic on hosted runners. The explicit application path and task include remove CLI and project-package discovery ambiguity.
+`pool=solo` and concurrency `1` keep execution deterministic on hosted runners. The explicit application path and task include remove CLI and autodiscovery ambiguity.
 
-## Infrastructure end-to-end assertion
+## End-to-end assertion
 
 The workflow creates a unique Redis marker key and publishes the task through RabbitMQ:
 
@@ -120,21 +113,9 @@ The marker key is deleted after validation, whether the test succeeds or fails.
 
 The test intentionally does not use `AsyncResult.get()`. The marker provides independent evidence that the separate worker consumed and executed the task while keeping the check focused on the broker and worker path.
 
-## Application-specific asynchronous flow
+## What the test proves
 
-After database migrations, the workflow starts another separate worker without an explicit task include and runs:
-
-```bash
-python scripts/ci/validate_async_customer_input_flow.py
-```
-
-The script calls the real authenticated multipart CSV endpoint. The endpoint creates a `CustomerInput`, stores the CSV, publishes the production `create_collection` task, and waits for the worker to persist the parsed dataset in MongoDB GridFS and write the resulting identifier back to PostgreSQL.
-
-The detailed endpoint contract, fixture setup, persistence assertions, cleanup and diagnostics are documented in [`docs/ci-async-business-flow.md`](ci-async-business-flow.md).
-
-## What the infrastructure test proves
-
-A successful deterministic check confirms that the tested versions and configuration can perform all of the following together:
+A successful check confirms that the tested versions and configuration can perform all of the following together:
 
 - load `core.settings_ci` and the real Celery application;
 - build and authenticate the RabbitMQ broker connection;
@@ -146,38 +127,26 @@ A successful deterministic check confirms that the tested versions and configura
 - connect from the worker to Redis;
 - persist and validate the expected execution marker.
 
-This gives focused regression protection for the Celery, RabbitMQ and Redis integration contract represented by this test.
+This gives strong regression protection for the Celery, RabbitMQ and Redis integration contract represented by this test.
 
-## What the combined checks prove
+## What the test does not prove
 
-Together, the infrastructure and business-flow stages also confirm one real production contract involving:
+A green check does not guarantee that every production workflow is correct. This test does not cover:
 
-- HTTP routing, authentication and multipart request handling;
-- PostgreSQL metadata persistence;
-- application file storage;
-- production-task autodiscovery;
-- RabbitMQ publication and delivery;
-- separate worker execution;
-- MongoDB GridFS persistence;
-- cross-database state propagation back to PostgreSQL.
-
-## Scope boundaries
-
-A green workflow does not guarantee that every asynchronous production workflow is correct. The current checks do not cover:
-
-- every production task and argument contract;
+- HTTP endpoints or authentication;
+- production business tasks and their argument contracts;
+- PostgreSQL or MongoDB side effects inside a Celery task;
 - retries, acknowledgements after failure or dead-letter behavior;
 - idempotency and duplicate delivery handling;
 - Celery Beat or scheduled tasks;
 - multiple workers or production concurrency pools;
-- large-file performance and resource limits;
-- production secrets, networking or deployment configuration.
+- production containers, secrets, networking or deployment configuration.
 
-Additional business flows should be added when they represent materially different task contracts or failure modes.
+Application-specific asynchronous workflows should have additional integration tests that publish a real business task and assert its persisted business effect.
 
 ## Failure diagnostics
 
-The deterministic worker writes to:
+The worker writes to:
 
 ```text
 /tmp/celery-worker.log
@@ -193,26 +162,14 @@ if: failure()
 
 Therefore it is expected to appear as `skipped` when the job is successful. When an earlier step fails, the full worker log is uploaded as the `celery-worker-diagnostics` artifact and retained for three days.
 
-The business-flow worker and script write to:
+## Validation result
 
-```text
-/tmp/celery-business-worker.log
-/tmp/async-business-flow.log
-```
-
-When the business-flow stage fails, both files are uploaded as the `async-business-flow-diagnostics` artifact. That upload step is also expected to be `skipped` on success.
-
-## Validation results
-
-Workflow run #112 completed successfully with the deterministic Celery infrastructure check.
-
-Workflow run #137 completed successfully with:
+Workflow run #112 completed successfully, including:
 
 - Redis cache integration;
 - MongoDB CRUD integration;
 - RabbitMQ connectivity through the Celery configuration;
-- deterministic Celery task publication and worker execution;
-- authenticated asynchronous customer-input business-flow validation;
+- end-to-end Celery task publication and worker execution;
 - migration checks and application;
 - the Django test suite;
 - the 70% coverage gate and coverage artifact.
