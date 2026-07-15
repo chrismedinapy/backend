@@ -65,6 +65,21 @@ jobs:
           --health-timeout 5s
           --health-retries 10
 
+      rabbitmq:
+        image: rabbitmq:4-management-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: core
+          RABBITMQ_DEFAULT_PASS: core
+          RABBITMQ_DEFAULT_VHOST: /
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -136,6 +151,22 @@ jobs:
           assert collection.find_one({"_id": result.inserted_id}) is None, "MongoDB document was not deleted"
           client.close()
           print("MongoDB integration validated")
+          PY
+
+      - name: Validate RabbitMQ connection through Celery configuration
+        run: |
+          python - <<'PY'
+          from core.celery import app
+
+          assert app.conf.broker_url, "Celery broker URL is not configured"
+
+          with app.connection_for_write(connect_timeout=5) as connection:
+              connection.ensure_connection(max_retries=3)
+              assert connection.connected, "Celery did not establish a RabbitMQ connection"
+              print(
+                  "RabbitMQ connection validated through Celery configuration "
+                  f"using transport={connection.transport.driver_name}"
+              )
           PY
 
       - name: Check for missing migrations
