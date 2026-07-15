@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
+from data.api.listing import paginate_list
 from data.logic.customer import CustomerLogic
 from data.serializers.customer import CustomerSerializers
 from data.utils.validator import body_validator, uuid_validator
@@ -14,15 +15,22 @@ class CustomerViewClass(ViewSet):
     customer_logic = CustomerLogic()
 
     def create(self, request):
-        body_validator(request.data, CustomerSerializers)
-        self.customer_logic.create(request.data, request.user.get("user_code"))
+        customer_data = body_validator(request.data, CustomerSerializers)
+        self.customer_logic.create(customer_data, request.user.get("user_code"))
         return Response(status=status.HTTP_201_CREATED)
 
     @method_decorator(cache_page(60 * 60 * 2))
     @method_decorator(vary_on_headers("Authorization"))
     def get_customers(self, request):
-        customer_list = self.customer_logic.get_customers()
-        return Response(customer_list, status=status.HTTP_200_OK)
+        customers = self.customer_logic.get_customers()
+        response = paginate_list(
+            request,
+            customers,
+            search_fields=("customer_name", "customer_description"),
+            ordering_fields=("customer_name", "customer_code"),
+            default_ordering="customer_name",
+        )
+        return Response(response, status=status.HTTP_200_OK)
 
     @method_decorator(cache_page(60 * 60 * 2))
     @method_decorator(vary_on_headers("Authorization"))
@@ -38,6 +46,6 @@ class CustomerViewClass(ViewSet):
 
     def update(self, request, customer_code):
         uuid_validator(customer_code)
-        body_validator(request.data, CustomerSerializers)
-        customer = self.customer_logic.update(customer_code, request.data)
+        customer_data = body_validator(request.data, CustomerSerializers)
+        customer = self.customer_logic.update(customer_code, customer_data)
         return Response(customer, status=status.HTTP_200_OK)
