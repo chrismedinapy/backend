@@ -54,3 +54,7 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_RESULT_EXPIRES = 300
+
+# The project package is not a Django application, so Celery autodiscovery does
+# not scan it. Import the deterministic CI-only task explicitly for the worker.
+CELERY_IMPORTS = ("core.ci_tasks",)
