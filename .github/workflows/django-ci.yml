@@ -261,6 +261,44 @@ jobs:
       - name: Show migration plan
         run: python manage.py showmigrations --plan
 
+      - name: Validate asynchronous customer-input business flow
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+
+          celery -A core.celery:app worker \
+            --pool=solo \
+            --concurrency=1 \
+            --loglevel=WARNING \
+            --without-gossip \
+            --without-mingle \
+            --without-heartbeat \
+            > /tmp/celery-business-worker.log 2>&1 &
+          worker_pid=$!
+
+          cleanup() {
+            kill "$worker_pid" 2>/dev/null || true
+            wait "$worker_pid" 2>/dev/null || true
+            echo "===== Asynchronous business worker output ====="
+            tail -n 160 /tmp/celery-business-worker.log || true
+          }
+          trap cleanup EXIT
+
+          sleep 3
+          python scripts/ci/validate_async_customer_input_flow.py \
+            2>&1 | tee /tmp/async-business-flow.log
+
+      - name: Upload asynchronous business-flow diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: async-business-flow-diagnostics
+          path: |
+            /tmp/celery-business-worker.log
+            /tmp/async-business-flow.log
+          if-no-files-found: error
+          retention-days: 3
+
       - name: Run Django test suite with coverage
         run: |
           set +e
