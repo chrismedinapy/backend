@@ -1,14 +1,20 @@
 """Contract tests for the public OpenAPI and documentation endpoints."""
 
 import yaml
-from django.test import SimpleTestCase
+from django.test import TestCase
 from django.urls import reverse
 
 
-class OpenAPIDocumentationTests(SimpleTestCase):
+class OpenAPIDocumentationTests(TestCase):
+    """Exercise schema generation against the real Django URL and model setup."""
+
     def _schema(self):
         response = self.client.get(reverse("api-schema"))
         self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            response["Content-Type"].startswith("application/vnd.oai.openapi"),
+            response["Content-Type"],
+        )
         return yaml.safe_load(response.content)
 
     def test_schema_endpoint_returns_valid_openapi_document(self):
