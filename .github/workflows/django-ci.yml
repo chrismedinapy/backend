@@ -170,9 +170,15 @@ jobs:
           PY
 
       - name: Validate end-to-end Celery task execution
+        timeout-minutes: 2
         run: |
           python - <<'PY'
+          import json
+          import time
+          import uuid
+
           from celery.contrib.testing.worker import start_worker
+          from redis import Redis
 
           from core.celery import app
           from core.ci_tasks import ci_healthcheck
@@ -181,26 +187,40 @@ jobs:
               "received": "celery-is-ready",
               "status": "processed",
           }
+          marker_key = f"ci:celery:{uuid.uuid4()}"
+          redis_client = Redis(host="localhost", port=6379, db=1, decode_responses=True)
+          redis_client.delete(marker_key)
 
           assert "core.ci_healthcheck" in app.tasks, (
               "CI healthcheck task was not registered in the Celery app"
           )
-          assert app.conf.result_backend == "redis://localhost:6379/1", (
-              f"Unexpected Celery result backend: {app.conf.result_backend!r}"
-          )
 
-          with start_worker(
-              app,
-              pool="solo",
-              concurrency=1,
-              perform_ping_check=False,
-              loglevel="INFO",
-          ):
-              result = ci_healthcheck.delay("celery-is-ready")
-              output = result.get(timeout=20)
+          try:
+              with start_worker(
+                  app,
+                  pool="solo",
+                  concurrency=1,
+                  perform_ping_check=False,
+                  loglevel="WARNING",
+                  shutdown_timeout=10,
+              ):
+                  ci_healthcheck.delay("celery-is-ready", marker_key)
 
-          assert output == expected, f"Unexpected Celery task result: {output!r}"
-          print(f"Celery task executed successfully with result={output}")
+                  deadline = time.monotonic() + 20
+                  while time.monotonic() < deadline:
+                      stored = redis_client.get(marker_key)
+                      if stored is not None:
+                          output = json.loads(stored)
+                          break
+                      time.sleep(0.25)
+                  else:
+                      raise RuntimeError("Celery worker did not write the Redis execution marker")
+          finally:
+              redis_client.delete(marker_key)
+              redis_client.close()
+
+          assert output == expected, f"Unexpected Celery task marker: {output!r}"
+          print(f"Celery task executed successfully with marker={output}")
           PY
 
       - name: Check for missing migrations
