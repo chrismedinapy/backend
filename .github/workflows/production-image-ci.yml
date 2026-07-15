@@ -1,0 +1,78 @@
+name: Production Docker image
+
+on:
+  pull_request:
+    branches:
+      - main
+      - release
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-image-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-smoke-test:
+    name: Build and smoke test production image
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Build production image
+        run: |
+          docker build \
+            --tag "datacore-ci:${GITHUB_SHA}" \
+            .
+
+      - name: Verify image runtime
+        run: |
+          set -euo pipefail
+
+          image="datacore-ci:${GITHUB_SHA}"
+          working_dir="$(docker image inspect "$image" --format '{{.Config.WorkingDir}}')"
+          test "$working_dir" = "/app"
+
+          docker run --rm "$image" python -c '
+          import sys
+          assert sys.version_info[:2] == (3, 12), sys.version
+          print(sys.version)
+          '
+
+          docker run --rm "$image" python -m pip check
+
+      - name: Smoke test Django and GIS inside image
+        run: |
+          set -euo pipefail
+
+          docker run --rm \
+            --env DJANGO_SETTINGS_MODULE=core.settings_ci \
+            "datacore-ci:${GITHUB_SHA}" \
+            sh -c '
+              python -c "from django.contrib.gis.gdal import gdal_version; print(\"GDAL\", gdal_version())" &&
+              python manage.py check
+            '
+
+      - name: Verify sensitive files are excluded
+        run: |
+          set -euo pipefail
+
+          docker run --rm "datacore-ci:${GITHUB_SHA}" sh -c '
+            test ! -e /app/.git
+            test ! -e /app/.github
+            test ! -e /app/.env
+          '
+
+      - name: Show image metadata
+        if: always()
+        run: |
+          docker image inspect "datacore-ci:${GITHUB_SHA}" \
+            --format 'image={{.RepoTags}} size={{.Size}} working_dir={{.Config.WorkingDir}}'
