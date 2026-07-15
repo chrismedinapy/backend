@@ -46,7 +46,7 @@ jupyter-client==8.6.3
 jupyter-core==5.7.2
 kombu==5.4.2
 lazy-object-proxy==1.10.0
-Markdown==3.7
+Markdown==3.8.1
 MarkupSafe==2.1.5
 matplotlib-inline==0.1.7
 mccabe==0.7.0
