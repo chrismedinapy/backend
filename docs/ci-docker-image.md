@@ -6,8 +6,12 @@ The repository validates its application Docker image in a dedicated GitHub Acti
 
 The workflow is intentionally separate from the Django integration workflow. Pull requests targeting `release` or `main` therefore expose two independent checks:
 
-1. Django system, service integration, migration, test and coverage validation;
-2. production image build and container smoke validation.
+1. `Django system, migration, test and coverage checks`;
+2. `Build and smoke test production image`.
+
+These are not duplicate executions. The first check validates the application and its service integrations. The second validates the deployable container artifact produced by the repository Dockerfile.
+
+The image workflow first passed in workflow run #1. The final documented PR head was validated successfully by production-image workflow run #3, alongside Django CI baseline run #127.
 
 ## Image baseline
 
@@ -66,6 +70,10 @@ DJANGO_SETTINGS_MODULE=core.settings_ci python manage.py check
 
 This catches images that build successfully but cannot load the native GDAL library, import the Django project, or pass Django's system checks.
 
+### 4. Inspect the resulting image
+
+The workflow prints the image tag, size and configured working directory. This metadata is diagnostic and does not publish the image to a registry.
+
 ## Trigger behavior
 
 The production-image workflow runs for:
@@ -76,6 +84,15 @@ The production-image workflow runs for:
 - manual `workflow_dispatch` executions.
 
 It does not run on pushes to `release`. This avoids duplicating the image build immediately after a feature PR has already passed the same check, while retaining a post-merge validation on `main`.
+
+For a normal feature PR into `release`, the expected checks are therefore:
+
+```text
+Django CI baseline
+Production Docker image
+```
+
+After the PR is merged into `release`, only the existing Django workflow runs on the branch push. The Docker image workflow runs again when the release is promoted to `main` and on the resulting push to `main`.
 
 ## Guarantees
 
