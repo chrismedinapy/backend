@@ -2,7 +2,7 @@
 
 ## Status
 
-The project CI now validates the application with Django 5.2.16 LTS on Python 3.12. The migration was validated successfully by workflow run #59. The current infrastructure baseline includes Redis, MongoDB, RabbitMQ connectivity and end-to-end Celery task execution.
+The project CI validates the application with Django 5.2.16 LTS on Python 3.12. The Django migration was validated successfully by workflow run #59. The current infrastructure baseline, including the end-to-end Celery subsystem check, was validated successfully by workflow run #112.
 
 ## What changed
 
@@ -26,7 +26,7 @@ No direct application usages requiring code changes were found during the migrat
 
 ## Current CI baseline
 
-The Django CI pipeline now validates the following stack:
+The Django CI pipeline validates the following stack:
 
 - Python 3.12;
 - Django 5.2.16 LTS;
@@ -34,13 +34,16 @@ The Django CI pipeline now validates the following stack:
 - Redis 7.4 cache connectivity and operations;
 - MongoDB 8.0 connectivity and CRUD operations;
 - RabbitMQ authentication and AMQP connectivity through the real Celery broker configuration;
-- end-to-end Celery task publication, worker execution and Redis-backed result retrieval;
+- end-to-end Celery task publication, queue consumption, worker execution and Redis execution-marker validation;
 - dependency consistency through `pip check`;
 - Django system checks;
 - migration generation and application;
 - the complete Django test suite;
 - a minimum total coverage gate of 70%;
-- `coverage.xml` publication as a workflow artifact.
+- `coverage.xml` publication as a workflow artifact;
+- conditional Celery worker diagnostics when the job fails.
+
+The Celery check is an end-to-end test of the asynchronous infrastructure subsystem. It does not replace application-specific tests for production tasks or complete HTTP-to-database business workflows.
 
 ## Validation commands
 
@@ -58,7 +61,7 @@ coverage xml
 Redis integration details are documented in [`docs/ci-redis.md`](ci-redis.md).
 MongoDB integration details are documented in [`docs/ci-mongodb.md`](ci-mongodb.md).
 RabbitMQ integration details are documented in [`docs/ci-rabbitmq.md`](ci-rabbitmq.md).
-Celery integration details are documented in [`docs/ci-celery.md`](ci-celery.md).
+Celery integration details, coverage boundaries and RabbitMQ 4 compatibility are documented in [`docs/ci-celery.md`](ci-celery.md).
 
 ## Roadmap
 
@@ -67,5 +70,6 @@ Celery integration details are documented in [`docs/ci-celery.md`](ci-celery.md)
 - [x] Validate Redis integration.
 - [x] Validate MongoDB integration.
 - [x] Validate RabbitMQ integration through Celery configuration.
-- [x] Run Celery worker and task integration tests.
+- [x] Run an end-to-end Celery worker and task integration test.
+- [ ] Add an application-specific asynchronous business-flow integration test.
 - [ ] Validate the production Docker image build.
