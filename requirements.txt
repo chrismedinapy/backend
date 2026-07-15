@@ -84,7 +84,7 @@ pytz==2024.2
 PyYAML==6.0.2
 pyzmq==26.2.0
 redis==5.2.1
-requests==2.32.4
+requests==2.33.0
 simplejson==3.19.3
 six==1.17.0
 sqlparse==0.5.3
