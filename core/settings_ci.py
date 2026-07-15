@@ -10,7 +10,8 @@ import os
 CI_DEFAULTS = {
     "SECRET_KEY": "ci-not-a-real-secret",
     "ALGORITHM": "HS256",
-    "ACCESS_TOKEN_EXPIRE_DAYS": "1",
+    "ACCESS_TOKEN_EXPIRE_SECONDS": "86400",
+    "REFRESH_TOKEN_EXPIRE_DAYS": "7",
     "ENCODING": "utf-8",
     "DEBUG": "False",
     "CELERY_DEBUG": "False",
@@ -50,19 +51,8 @@ from .settings import *  # noqa: E402,F401,F403
 
 DEBUG = False
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
-
-# RabbitMQ remains the broker used by the application. Redis database 1 is an
-# isolated result backend used only to prove end-to-end task execution in CI.
 CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_RESULT_EXPIRES = 300
-
-# RabbitMQ 4 rejects the deprecated transient non-exclusive queue used by
-# Celery's remote-control pidbox. The CI task test does not use inspect, ping,
-# broadcast, revoke, or other remote-control commands, so disable that optional
-# worker subsystem only in the isolated CI settings.
 CELERY_WORKER_ENABLE_REMOTE_CONTROL = False
-
-# The project package is not a Django application, so Celery autodiscovery does
-# not scan it. Import the deterministic CI-only task explicitly for the worker.
 CELERY_IMPORTS = ("core.ci_tasks",)
