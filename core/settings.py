@@ -84,6 +84,7 @@ SPECTACULAR_SETTINGS = {
     "SCHEMA_PATH_PREFIX": r"/api/v1",
     "COMPONENT_SPLIT_REQUEST": True,
     "SORT_OPERATIONS": True,
+    "PREPROCESSING_HOOKS": ["core.schema.keep_versioned_api_endpoints"],
 }
 
 ROOT_URLCONF = "core.urls"
