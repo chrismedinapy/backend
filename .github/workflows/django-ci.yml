@@ -172,15 +172,35 @@ jobs:
       - name: Validate end-to-end Celery task execution
         timeout-minutes: 2
         run: |
+          set -euo pipefail
+
+          celery -A core.celery:app worker \
+            --pool=solo \
+            --concurrency=1 \
+            --loglevel=WARNING \
+            --without-gossip \
+            --without-mingle \
+            --without-heartbeat \
+            --include=core.ci_tasks \
+            > /tmp/celery-worker.log 2>&1 &
+          worker_pid=$!
+
+          cleanup() {
+            kill "$worker_pid" 2>/dev/null || true
+            wait "$worker_pid" 2>/dev/null || true
+            echo "===== Celery worker output ====="
+            tail -n 120 /tmp/celery-worker.log || true
+          }
+          trap cleanup EXIT
+
           python - <<'PY'
           import json
+          import os
           import time
           import uuid
 
-          from celery.contrib.testing.worker import start_worker
           from redis import Redis
 
-          from core.celery import app
           from core.ci_tasks import ci_healthcheck
 
           expected = {
@@ -188,33 +208,28 @@ jobs:
               "status": "processed",
           }
           marker_key = f"ci:celery:{uuid.uuid4()}"
-          redis_client = Redis(host="localhost", port=6379, db=1, decode_responses=True)
+          redis_client = Redis(
+              host=os.environ.get("REDIS_HOST", "localhost"),
+              port=int(os.environ.get("REDIS_PORT", "6379")),
+              db=1,
+              decode_responses=True,
+          )
           redis_client.delete(marker_key)
 
-          assert "core.ci_healthcheck" in app.tasks, (
-              "CI healthcheck task was not registered in the Celery app"
-          )
-
           try:
-              with start_worker(
-                  app,
-                  pool="solo",
-                  concurrency=1,
-                  perform_ping_check=False,
-                  loglevel="WARNING",
-                  shutdown_timeout=10,
-              ):
-                  ci_healthcheck.delay("celery-is-ready", marker_key)
+              time.sleep(3)
+              result = ci_healthcheck.delay("celery-is-ready", marker_key)
+              print(f"Published Celery task id={result.id}")
 
-                  deadline = time.monotonic() + 20
-                  while time.monotonic() < deadline:
-                      stored = redis_client.get(marker_key)
-                      if stored is not None:
-                          output = json.loads(stored)
-                          break
-                      time.sleep(0.25)
-                  else:
-                      raise RuntimeError("Celery worker did not write the Redis execution marker")
+              deadline = time.monotonic() + 20
+              while time.monotonic() < deadline:
+                  stored = redis_client.get(marker_key)
+                  if stored is not None:
+                      output = json.loads(stored)
+                      break
+                  time.sleep(0.25)
+              else:
+                  raise RuntimeError("Celery worker did not write the Redis execution marker")
           finally:
               redis_client.delete(marker_key)
               redis_client.close()
