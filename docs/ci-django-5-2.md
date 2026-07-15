@@ -2,7 +2,7 @@
 
 ## Status
 
-The project CI validates the application with Django 5.2.16 LTS on Python 3.12. The Django migration was validated successfully by workflow run #59. The infrastructure baseline, including the end-to-end Celery subsystem check, was validated successfully by workflow run #112. The production Docker image build and container smoke test were first validated successfully by the `Production Docker image` workflow run #1.
+The project CI validates the application with Django 5.2.16 LTS on Python 3.12. The Django migration was validated successfully by workflow run #59. The infrastructure baseline, including the end-to-end Celery subsystem check, was validated successfully by workflow run #112. The production Docker image build and container smoke test first passed in `Production Docker image` workflow run #1. The final documented PR head passed production-image workflow run #3 and Django CI baseline run #127.
 
 ## What changed
 
@@ -27,7 +27,12 @@ No direct application usages requiring code changes were found during the migrat
 
 ## Current CI baseline
 
-The repository CI validates the following stack:
+The repository now exposes two complementary GitHub Actions checks on pull requests targeting `release` or `main`:
+
+1. application, service integration, migration, test and coverage validation;
+2. production Docker image build and container smoke validation.
+
+Together they validate the following stack and controls:
 
 - Python 3.12;
 - Django 5.2.16 LTS;
@@ -75,7 +80,7 @@ Redis integration details are documented in [`docs/ci-redis.md`](ci-redis.md).
 MongoDB integration details are documented in [`docs/ci-mongodb.md`](ci-mongodb.md).
 RabbitMQ integration details are documented in [`docs/ci-rabbitmq.md`](ci-rabbitmq.md).
 Celery integration details, coverage boundaries and RabbitMQ 4 compatibility are documented in [`docs/ci-celery.md`](ci-celery.md).
-Production image build, smoke-test guarantees and scope boundaries are documented in [`docs/ci-docker-image.md`](ci-docker-image.md).
+Production image build, smoke-test guarantees, trigger behavior and scope boundaries are documented in [`docs/ci-docker-image.md`](ci-docker-image.md).
 
 ## Roadmap
 
