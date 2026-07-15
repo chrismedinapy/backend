@@ -34,6 +34,11 @@ RUN python -m pip install --upgrade \
 
 COPY --chown=app:app . /app/
 
+# Django creates and writes runtime files below FILES_ROOT. Keep the image
+# non-root while explicitly granting ownership only to application paths.
+RUN mkdir -p /app/files \
+    && chown -R app:app /app
+
 USER app
 
 EXPOSE 8000
