@@ -8,6 +8,8 @@ The project CI validates the application with Django 5.2.16 LTS on Python 3.12. 
 
 - Django was upgraded from 4.2.28 to 5.2.16 LTS.
 - The PostGIS service used by GitHub Actions was upgraded from PostgreSQL 13 to PostgreSQL 14 because Django 5.2 requires PostgreSQL 14 or later.
+- The application Docker image was upgraded from Python 3.8 on Debian Buster to Python 3.12 on Debian Bookworm.
+- The CI baseline now validates one production asynchronous CSV-ingestion workflow across the API, PostgreSQL/PostGIS, file storage, RabbitMQ, Celery and MongoDB GridFS.
 - No application-level compatibility changes were required after reviewing common removals and deprecations from Django 5.0, 5.1 and 5.2.
 - Temporary diagnostic workflow changes and unrelated UUID migration changes were removed before the final validation.
 
@@ -53,9 +55,17 @@ python manage.py check
 python manage.py makemigrations --dry-run --verbosity 3
 python manage.py migrate --noinput --verbosity=1
 python manage.py showmigrations --plan
+python scripts/ci/validate_async_customer_input_flow.py
 coverage run --source=core,data,middleware manage.py test --verbosity=2
 coverage report --show-missing --fail-under=70
 coverage xml
+
+docker build --tag datacore-ci:local .
+docker run --rm datacore-ci:local python -m pip check
+docker run --rm \
+  --env DJANGO_SETTINGS_MODULE=core.settings_ci \
+  datacore-ci:local \
+  python manage.py check
 ```
 
 Redis integration details are documented in [`docs/ci-redis.md`](ci-redis.md).

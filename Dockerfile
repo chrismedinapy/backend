@@ -1,29 +1,33 @@
-FROM perrygeo/gdal-base:latest as builder
+FROM python:3.12-slim-bookworm
 
-# Python dependencies that require compilation
-COPY requirements.txt .
-RUN python -m pip install cython numpy -c requirements.txt
-RUN python -m pip install --no-binary fiona,rasterio,shapely -r requirements.txt
-RUN pip uninstall cython --yes
+LABEL org.opencontainers.image.title="DataCore" \
+      org.opencontainers.image.description="Django REST backend for DataCore"
 
-FROM python:3.8-slim-buster as final
-# set working directory
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
 WORKDIR /app
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-# install python dependencies
-COPY ./requirements.txt .
-RUN pip install --upgrade -r requirements.txt
-# add app
-COPY . /app/ 
-# Install the previously-built shared libaries from the builder image
 
+# Runtime libraries required by Django GIS/PostGIS and PostgreSQL clients.
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
-        libfreexl1 libxml2 libpng16-16\
+        gdal-bin \
+        libgdal-dev \
+        libgeos-c1v5 \
+        libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install the previously-built shared libaries from the builder image
-COPY --from=builder /usr/local /usr/local
-RUN ldconfig
+COPY requirements.txt ./
+
+RUN python -m pip install --upgrade \
+        "pip==24.3.1" \
+        "setuptools<76" \
+        "wheel<0.46" \
+    && python -m pip install -r requirements.txt \
+    && python -m pip check
+
+COPY . /app/
+
+EXPOSE 8000

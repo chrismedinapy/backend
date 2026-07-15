@@ -1,17 +1,24 @@
-from pymongo import MongoClient
 from decouple import config
-import gridfs
+from pymongo import MongoClient
 
 
-def get_client(db_name=config("MONGO_INITDB_DATABASE")):
-    host = config("MONGO_HOST")
-    port = config("MONGO_PORT")
-    mongo_conn = MongoClient(
-        host=['mongodb:27017'], document_class=dict, tz_aware=False, connect=True)
-    return mongo_conn[db_name]
+def _create_client():
+    """Create a Mongo client from the configured deployment coordinates."""
+    return MongoClient(
+        host=config("MONGO_HOST"),
+        port=config("MONGO_PORT", cast=int),
+        document_class=dict,
+        tz_aware=False,
+        connect=True,
+    )
+
+
+def get_client(db_name=None):
+    """Return the configured application database."""
+    database_name = db_name or config("MONGO_INITDB_DATABASE")
+    return _create_client()[database_name]
+
+
 def get_gridf_db():
-    try:
-        conn = MongoClient(host=['mongodb:27017'], document_class=dict, tz_aware=False, connect=True)
-        return conn.grid_file
-    except Exception as ex:
-        print("ERROR, ", ex)
+    """Return the configured application database for GridFS operations."""
+    return get_client()

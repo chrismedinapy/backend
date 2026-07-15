@@ -174,6 +174,7 @@ python manage.py check
 python manage.py makemigrations --dry-run --verbosity 3
 python manage.py migrate --noinput --verbosity=1
 python manage.py showmigrations --plan
+python scripts/ci/validate_async_customer_input_flow.py
 coverage run --source=core,data,middleware manage.py test --verbosity=2
 coverage report --show-missing --fail-under=70
 coverage xml
