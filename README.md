@@ -40,7 +40,7 @@ Django REST API
     └── RabbitMQ 4                asynchronous task broker
 ```
 
-The CI baseline validates the application and its service integrations, exercises both a deterministic Celery infrastructure healthcheck and a real asynchronous CSV-ingestion flow, and builds and smoke-tests the production Docker image.
+The CI baseline validates the application and its service integrations, exercises a deterministic Celery infrastructure healthcheck, a real asynchronous CSV-ingestion flow, retry and duplicate-delivery reliability, and the production Docker image build and smoke test.
 
 ## Technology baseline
 
@@ -154,7 +154,7 @@ This image check does not yet validate the complete deployment topology, registr
 
 Two complementary GitHub Actions workflows protect pull requests targeting `release` or `main`:
 
-1. `Django CI baseline` validates the application, migrations, service integrations, asynchronous flows, tests, and coverage.
+1. `Django CI baseline` validates the application, migrations, service integrations, asynchronous flows, reliability tests, tests, and coverage.
 2. `Production Docker image` builds and smoke-tests the application container.
 
 A normal pull request is expected to show these two primary checks:
@@ -187,13 +187,20 @@ The baseline currently validates:
 - MongoDB connectivity and CRUD operations;
 - RabbitMQ authentication and AMQP connectivity through the real Celery configuration;
 - deterministic Celery task publication, broker delivery, worker execution, and Redis marker assertion;
+- a deterministic task retry that fails once and succeeds on its second execution;
+- bounded transient retry configuration on the production CSV-ingestion task;
+- late acknowledgement and worker-loss rejection;
 - an authenticated multipart CSV upload through the production API;
 - `CustomerInput` metadata persistence in PostgreSQL/PostGIS;
 - CSV persistence on the application filesystem;
 - publication and execution of the production `create_collection` Celery task;
+- deterministic GridFS identifiers derived from `customer_input_code`;
 - dataset persistence in MongoDB GridFS;
-- propagation of `gridfs_code` back into PostgreSQL;
-- exact persisted-data assertions and cleanup of generated records, files, and GridFS objects;
+- duplicate-delivery convergence on one GridFS object;
+- four simultaneous persistence calls converging on the same business result;
+- propagation of a stable `gridfs_code` back into PostgreSQL;
+- exact persisted-data assertions and cleanup of generated records, files, Redis markers, and GridFS objects;
+- explicit confirmation that no Celery Beat schedule currently exists;
 - the complete Django test suite;
 - a minimum total coverage gate of 70%;
 - publication of `coverage.xml` as a workflow artifact;
@@ -247,10 +254,33 @@ Authenticated multipart HTTP POST
 → production create_collection task
 → MongoDB GridFS dataset
 → PostgreSQL gridfs_code update
+→ duplicate task publications
 → exact assertions and cleanup
 ```
 
-This verifies a real production business contract rather than only a synthetic healthcheck. It still does not cover every task, failure mode, retry policy, or concurrency topology.
+This verifies a real production business contract rather than only a synthetic healthcheck. Duplicate publications must return the same deterministic GridFS identifier and leave only one matching GridFS file.
+
+### Celery reliability check
+
+The reliability suite validates:
+
+```text
+intentional first task failure
+→ Celery retry
+→ second execution succeeds
+→ Redis attempts=2 marker
+
+four simultaneous persistence calls
+→ one deterministic GridFS ObjectId
+→ one fs.files record
+→ one stable PostgreSQL gridfs_code
+```
+
+The production task retries at most three times and only when the exception chain contains a recognized transient MongoDB or PostgreSQL failure. Invalid CSV data and other non-transient application failures are not retried automatically.
+
+No Celery Beat schedule or periodic-task dependency currently exists. CI asserts that the effective schedule remains empty so that a future scheduled task cannot be added silently without a matching validation contract.
+
+The repository does not define deployment-specific worker pool, process count, autoscaling, CPU limits, or queue routing. CI validates concurrency at the shared GridFS persistence boundary; exact production worker topology must be validated when orchestration configuration is added to the repository.
 
 ### Production image check
 
@@ -296,6 +326,7 @@ Detailed CI notes are maintained in the `docs` directory:
 - [MongoDB integration](docs/ci-mongodb.md)
 - [RabbitMQ integration](docs/ci-rabbitmq.md)
 - [Celery infrastructure end-to-end integration](docs/ci-celery.md)
+- [Celery retries, idempotency, and concurrency](docs/ci-celery-reliability.md)
 - [Asynchronous customer-input business flow](docs/ci-async-business-flow.md)
 - [Production Docker image validation](docs/ci-docker-image.md)
 
@@ -317,13 +348,17 @@ Completed:
 - [x] Django test suite and 70% coverage gate;
 - [x] failure diagnostics and workflow artifacts;
 - [x] production Docker image build and container smoke test;
-- [x] application-specific asynchronous business-flow integration test.
+- [x] application-specific asynchronous business-flow integration test;
+- [x] bounded retry and transient-failure classification validation;
+- [x] idempotency and duplicate-delivery validation;
+- [x] concurrent duplicate persistence at the shared GridFS boundary;
+- [x] scheduled-task scope review with an explicit empty Beat schedule assertion.
 
 Next:
 
-- [ ] validate retries, idempotency, scheduled tasks, and production worker concurrency where required;
 - [ ] add container vulnerability scanning and SBOM generation where required;
-- [ ] add registry publishing and image signing where required.
+- [ ] add registry publishing and image signing where required;
+- [ ] validate deployment-specific worker pool and autoscaling settings when production orchestration is added to the repository.
 
 ## Diagrams
 

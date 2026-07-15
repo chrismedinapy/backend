@@ -3,7 +3,9 @@
 The script creates deterministic fixture records, calls the production REST
 endpoint with a multipart CSV upload, waits for a separate Celery worker to
 process the production task, and verifies the resulting PostgreSQL and MongoDB
-GridFS state. All generated records and files are removed before exit.
+GridFS state. It then publishes duplicate deliveries and proves that concurrent
+workers converge on one deterministic GridFS object. All generated records and
+files are removed before exit.
 """
 
 from __future__ import annotations
@@ -41,11 +43,13 @@ from data.models.customer import Customer
 from data.models.customer_input import CustomerInput
 from data.models.retail_store import RetailStore
 from data.models.user import User
+from data.task.create_customer_input_dataset import create_collection
 from data.utils.constant import Status
 from data.utils.mongo_client import get_client
 
 
 TIMEOUT_SECONDS = 30
+DUPLICATE_DELIVERIES = 4
 
 
 def _create_token(user_code: uuid.UUID) -> str:
@@ -72,6 +76,10 @@ def main() -> None:
     )
 
     try:
+        assert create_collection.max_retries == 3
+        assert create_collection.acks_late is True
+        assert create_collection.reject_on_worker_lost is True
+
         user = User(
             user_login_code=user_code,
             username=f"ci_{run_id}",
@@ -173,10 +181,36 @@ def main() -> None:
         assert dataset["columns"] == ["product", "quantity"], dataset
         assert dataset["data"] == [["coffee", "2"], ["tea", "3"]], dataset
 
+        duplicate_results = [
+            create_collection.delay(
+                str(customer_input.customer_input_code),
+                str(customer_code),
+                customer_input.csv_location,
+            )
+            for _ in range(DUPLICATE_DELIVERIES)
+        ]
+        returned_codes = [
+            result.get(timeout=TIMEOUT_SECONDS, propagate=True)
+            for result in duplicate_results
+        ]
+
+        assert returned_codes == [str(object_id)] * DUPLICATE_DELIVERIES
+        close_old_connections()
+        customer_input.refresh_from_db()
+        assert customer_input.gridfs_code == str(object_id)
+        assert database["fs.files"].count_documents({"_id": object_id}) == 1
+        assert database["fs.files"].count_documents(
+            {
+                "metadata.customer_input_code": str(
+                    customer_input.customer_input_code
+                )
+            }
+        ) == 1
+
         print(
-            "Asynchronous customer-input business flow validated: "
-            "HTTP upload -> PostgreSQL -> RabbitMQ -> Celery worker -> "
-            "MongoDB GridFS -> PostgreSQL gridfs_code"
+            "Asynchronous customer-input reliability validated: "
+            "HTTP upload -> PostgreSQL -> RabbitMQ -> concurrent Celery workers -> "
+            "one idempotent MongoDB GridFS object -> PostgreSQL gridfs_code"
         )
     finally:
         cache.clear()
