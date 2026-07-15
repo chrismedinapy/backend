@@ -48,3 +48,9 @@ from .settings import *  # noqa: E402,F401,F403
 
 DEBUG = False
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+
+# RabbitMQ remains the broker used by the application. Redis database 1 is an
+# isolated result backend used only to prove end-to-end task execution in CI.
+CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_RESULT_EXPIRES = 300
