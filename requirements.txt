@@ -87,7 +87,7 @@ redis==5.2.1
 requests==2.33.0
 simplejson==3.19.3
 six==1.17.0
-sqlparse==0.5.3
+sqlparse==0.5.4
 stack-data==0.6.3
 toml==0.10.2
 tomli==2.2.1
