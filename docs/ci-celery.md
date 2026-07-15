@@ -2,9 +2,9 @@
 
 ## Status
 
-The Django CI workflow validates the complete asynchronous Celery infrastructure path with real RabbitMQ and Redis services. The final implementation was validated successfully by workflow run #112.
+The Django CI workflow validates the complete asynchronous Celery infrastructure path with real RabbitMQ and Redis services. The final infrastructure implementation was validated successfully by workflow run #112.
 
-This is an end-to-end test of the Celery subsystem. It is not an end-to-end test of every application business flow.
+This is an end-to-end test of the Celery subsystem. Production retry, idempotency, duplicate-delivery, and concurrency behavior is covered separately by [`docs/ci-celery-reliability.md`](ci-celery-reliability.md).
 
 ## Architecture under test
 
@@ -56,9 +56,11 @@ CELERY_WORKER_ENABLE_REMOTE_CONTROL = False
 
 This does not disable normal task publication, queue consumption or task execution.
 
-## CI task
+## CI tasks
 
-The deterministic integration task lives in `core/ci_tasks.py`:
+The deterministic integration tasks live in `core/ci_tasks.py`.
+
+The healthcheck task records proof that a separate worker consumed a message:
 
 ```python
 @app.task(name="core.ci_healthcheck", ignore_result=True)
@@ -72,7 +74,9 @@ def ci_healthcheck(value: str, marker_key: str) -> None:
     client.close()
 ```
 
-The task has no PostgreSQL or MongoDB side effects. It writes a short-lived marker to Redis database `1`, which is isolated from the normal Redis cache validation.
+The retry probe intentionally fails its first execution and succeeds on the second. It is used by the Django reliability suite to confirm the exact retry attempt count and recovery marker.
+
+These tasks have no PostgreSQL or MongoDB side effects. They write short-lived markers to Redis database `1`, which is isolated from the normal Redis cache validation.
 
 ## Worker configuration
 
@@ -89,7 +93,9 @@ celery -A core.celery:app worker \
   --include=core.ci_tasks
 ```
 
-`pool=solo` and concurrency `1` keep execution deterministic on hosted runners. The explicit application path and task include remove CLI and autodiscovery ambiguity.
+`pool=solo` and concurrency `1` keep the infrastructure check deterministic on hosted runners. The explicit application path and task include remove CLI and autodiscovery ambiguity.
+
+Production concurrency is not inferred from this command. The application reliability tests validate concurrent duplicate persistence separately, while deployment-specific worker topology remains outside the repository.
 
 ## End-to-end assertion
 
@@ -113,7 +119,7 @@ The marker key is deleted after validation, whether the test succeeds or fails.
 
 The test intentionally does not use `AsyncResult.get()`. The marker provides independent evidence that the separate worker consumed and executed the task while keeping the check focused on the broker and worker path.
 
-## What the test proves
+## What the infrastructure test proves
 
 A successful check confirms that the tested versions and configuration can perform all of the following together:
 
@@ -129,20 +135,33 @@ A successful check confirms that the tested versions and configuration can perfo
 
 This gives strong regression protection for the Celery, RabbitMQ and Redis integration contract represented by this test.
 
-## What the test does not prove
+## Complementary reliability coverage
 
-A green check does not guarantee that every production workflow is correct. This test does not cover:
+Workflow run #150 additionally validates:
+
+- a deterministic task retry and recovery;
+- bounded transient retry configuration on the production task;
+- late acknowledgement and worker-loss rejection;
+- deterministic GridFS identifiers;
+- duplicate-delivery idempotency;
+- concurrent duplicate persistence;
+- explicit absence of a Celery Beat schedule.
+
+Those guarantees and their limits are documented in [`docs/ci-celery-reliability.md`](ci-celery-reliability.md).
+
+## What remains outside the infrastructure test
+
+The infrastructure healthcheck by itself does not cover:
 
 - HTTP endpoints or authentication;
-- production business tasks and their argument contracts;
+- production business-task argument contracts;
 - PostgreSQL or MongoDB side effects inside a Celery task;
-- retries, acknowledgements after failure or dead-letter behavior;
-- idempotency and duplicate delivery handling;
-- Celery Beat or scheduled tasks;
-- multiple workers or production concurrency pools;
-- production containers, secrets, networking or deployment configuration.
+- dead-letter behavior or poison-message routing;
+- operating-system worker termination and RabbitMQ redelivery after a crash;
+- deployment-specific pool type, process count, autoscaling, CPU limits, or queue routing;
+- production containers, secrets, networking, or deployment configuration.
 
-Application-specific asynchronous workflows should have additional integration tests that publish a real business task and assert its persisted business effect.
+The application-specific business-flow and reliability suites complement these boundaries without claiming to certify deployment topology.
 
 ## Failure diagnostics
 
@@ -173,3 +192,5 @@ Workflow run #112 completed successfully, including:
 - migration checks and application;
 - the Django test suite;
 - the 70% coverage gate and coverage artifact.
+
+Workflow run #150 completed successfully with the additional retry, idempotency, concurrency, and scheduled-task-scope tests.
