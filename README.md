@@ -39,7 +39,7 @@ Django REST API
     └── RabbitMQ 4                asynchronous task broker
 ```
 
-The CI workflow validates each infrastructure dependency independently and also exercises the complete Celery publication and worker-execution path.
+The CI workflows validate each infrastructure dependency, exercise the complete Celery publication and worker-execution path, and build and smoke-test the real application Docker image.
 
 ## Technology baseline
 
@@ -53,6 +53,7 @@ The CI workflow validates each infrastructure dependency independently and also 
 | Redis | 7.4 |
 | RabbitMQ | 4.x |
 | Celery | 5.4.0 |
+| Application image | Python 3.12 slim on Debian Bookworm |
 | Coverage gate | Minimum 70% total measured coverage |
 | CI runner | Ubuntu 22.04 |
 
@@ -133,16 +134,31 @@ The isolated CI configuration can be exercised locally with:
 DJANGO_SETTINGS_MODULE=core.settings_ci python manage.py check
 ```
 
-Production container-image validation is not yet part of the automated baseline, so deployment commands should be treated separately from the CI guarantees described below.
+### 5. Build and smoke-test the application image
+
+```bash
+docker build --tag datacore:local .
+docker run --rm datacore:local python -m pip check
+docker run --rm \
+  --env DJANGO_SETTINGS_MODULE=core.settings_ci \
+  datacore:local \
+  python manage.py check
+```
+
+The automated image check confirms that the image builds, uses Python 3.12, loads the native GDAL integration, passes Django system checks, and does not contain `.git`, `.github`, or `.env`.
+
+This does not yet validate the complete production deployment topology, registry publishing, image signing, vulnerability scanning, or a production WSGI/ASGI server.
 
 ## Continuous integration
 
-The GitHub Actions workflow runs on pull requests and pushes targeting both permanent branches:
+Two GitHub Actions workflows protect pull requests targeting the permanent branches:
 
-- `release`;
-- `main`.
+- `Django CI baseline` validates the application and service integrations;
+- `Production Docker image` builds and smoke-tests the application container.
 
-It uses the isolated settings module:
+The Django workflow runs for pull requests and pushes targeting `release` and `main`. The image workflow runs for pull requests targeting `release` or `main`, pushes to `main`, and manual executions. It intentionally skips pushes to `release` to avoid rerunning the same image build immediately after a successful feature PR.
+
+The application checks use the isolated settings module:
 
 ```text
 DJANGO_SETTINGS_MODULE=core.settings_ci
@@ -150,7 +166,7 @@ DJANGO_SETTINGS_MODULE=core.settings_ci
 
 ### Current CI validation
 
-The pipeline currently validates:
+The workflows currently validate:
 
 - dependency installation and consistency through `pip check`;
 - Django system checks;
@@ -164,9 +180,13 @@ The pipeline currently validates:
 - the complete Django test suite;
 - a minimum total coverage gate of 70%;
 - publication of `coverage.xml` as a workflow artifact;
-- conditional publication of Celery worker diagnostics when the job fails.
+- conditional publication of Celery worker diagnostics when the job fails;
+- construction of the real application Docker image;
+- Python 3.12 and dependency verification inside the image;
+- native GDAL loading and Django system checks inside the container;
+- exclusion of repository metadata and local environment files from the image.
 
-The core validation commands include:
+The core application validation commands include:
 
 ```bash
 python -m pip check
@@ -197,6 +217,23 @@ This provides strong regression protection for the Celery, RabbitMQ, and Redis i
 
 `Upload Celery worker diagnostics` intentionally runs only after a failure. Seeing that step as `skipped` on a successful workflow is expected.
 
+### Production image check
+
+The container workflow exercises this path:
+
+```text
+Dockerfile
+→ python:3.12-slim-bookworm
+→ operating-system GIS/PostgreSQL libraries
+→ requirements.txt installation
+→ pip check
+→ Django GIS/GDAL import
+→ manage.py check inside the image
+→ sensitive-path exclusion assertions
+```
+
+A successful image check means the repository can produce a runnable application container with the validated runtime and native dependencies. It does not by itself certify the complete production deployment.
+
 ## Branch and release workflow
 
 The repository uses two permanent branches:
@@ -213,7 +250,7 @@ main
 - `release` is the integration and release-candidate branch.
 - `main` contains promoted, reviewed releases.
 - Changes merged independently into `main`, such as dependency maintenance, must be synchronized back into `release` before the next promotion to prevent permanent-branch drift.
-- CI must pass before a change is promoted between permanent branches.
+- Both application and production-image checks must pass before a change is promoted between permanent branches.
 
 ## Technical documentation
 
@@ -224,6 +261,7 @@ Detailed CI notes are maintained in the `docs` directory:
 - [MongoDB integration](docs/ci-mongodb.md)
 - [RabbitMQ integration](docs/ci-rabbitmq.md)
 - [Celery end-to-end integration](docs/ci-celery.md)
+- [Production Docker image validation](docs/ci-docker-image.md)
 
 These documents describe the tested architecture, settings, assertions, diagnostics, guarantees, and known scope boundaries.
 
@@ -241,13 +279,14 @@ Completed:
 - [x] dependency consistency validation;
 - [x] migration integrity checks;
 - [x] Django test suite and 70% coverage gate;
-- [x] failure diagnostics and workflow artifacts.
+- [x] failure diagnostics and workflow artifacts;
+- [x] production Docker image build and container smoke test.
 
 Next:
 
-- [ ] validate the production Docker image build;
 - [ ] add an end-to-end asynchronous business-flow test that starts at an API endpoint and verifies a persisted application effect;
-- [ ] validate retries, idempotency, scheduled tasks, and production worker concurrency where required.
+- [ ] validate retries, idempotency, scheduled tasks, and production worker concurrency where required;
+- [ ] add container vulnerability scanning, SBOM generation, registry publishing and image signing where required.
 
 ## Diagrams
 
