@@ -1,6 +1,6 @@
 # DataCore
 
-DataCore is a Django REST backend for ingesting CSV files, storing file and user metadata in PostgreSQL/PostGIS, persisting tabular data in MongoDB, caching application data in Redis, and processing asynchronous workloads through Celery and RabbitMQ.
+DataCore is a Django REST backend for ingesting CSV files, storing relational metadata in PostgreSQL/PostGIS, persisting tabular datasets in MongoDB, caching application data in Redis, and processing asynchronous workloads through Celery and RabbitMQ.
 
 ## Contents
 
@@ -16,34 +16,35 @@ DataCore is a Django REST backend for ingesting CSV files, storing file and user
 
 ## Project overview
 
-The project models a retail analytics service. A client uploads CSV data, the application records metadata in PostgreSQL/PostGIS, stores the extracted tabular data in MongoDB, and schedules asynchronous processing through Celery. Redis provides caching and is also used by the isolated CI integration check to record proof that a Celery worker executed a task.
+The project models a retail analytics service. A client uploads CSV data, the application records metadata in PostgreSQL/PostGIS, stores the extracted tabular data in MongoDB GridFS, and schedules processing through Celery and RabbitMQ. Redis provides caching and an isolated execution marker for the lower-level Celery CI healthcheck.
 
-The intended application flow includes:
+The application flow includes:
 
 1. user and customer management;
 2. CSV upload and duplicate detection;
 3. metadata persistence in PostgreSQL/PostGIS;
-4. data-frame persistence in MongoDB;
-5. asynchronous processing through Celery and RabbitMQ;
-6. cached reads through Redis;
-7. future clustering and reporting workflows.
+4. file persistence on the configured application storage;
+5. asynchronous publication through Celery and RabbitMQ;
+6. tabular dataset persistence in MongoDB GridFS;
+7. cached reads through Redis;
+8. reporting and clustering workflows.
 
 ## Architecture
 
 ```text
 Django REST API
-├── PostgreSQL 14 + PostGIS 3.2   metadata and relational data
-├── MongoDB 8.0                   tabular and data-frame storage
-├── Redis 7.4                     cache and CI execution markers
+├── PostgreSQL 14 + PostGIS 3.2   relational metadata and GIS data
+├── MongoDB 8.0                   datasets and GridFS objects
+├── Redis 7.4                     application cache and CI execution markers
 └── Celery 5.4
     └── RabbitMQ 4                asynchronous task broker
 ```
 
-The CI workflow validates each infrastructure dependency independently and also exercises the complete Celery publication and worker-execution path.
+The CI baseline validates the application and its service integrations, exercises both a deterministic Celery infrastructure healthcheck and a real asynchronous CSV-ingestion flow, and builds and smoke-tests the production Docker image.
 
 ## Technology baseline
 
-| Component | Current validated version or role |
+| Component | Validated version or role |
 | --- | --- |
 | Python | 3.12 |
 | Django | 5.2.16 LTS |
@@ -53,6 +54,7 @@ The CI workflow validates each infrastructure dependency independently and also 
 | Redis | 7.4 |
 | RabbitMQ | 4.x |
 | Celery | 5.4.0 |
+| Application image | Python 3.12 slim on Debian Bookworm |
 | Coverage gate | Minimum 70% total measured coverage |
 | CI runner | Ubuntu 22.04 |
 
@@ -79,16 +81,16 @@ python -m pip check
 
 ### 3. Configure environment variables
 
-Create a `.env` file in the repository root. The application settings expect values equivalent to the following:
+Create a `.env` file in the repository root. The application settings expect values equivalent to:
 
 ```dotenv
-SECRET_KEY=replace-me
+SECRET_KEY=<required>
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 
 POSTGRES_DB=core
 POSTGRES_USER=core
-POSTGRES_PASSWORD=replace-me
+POSTGRES_PASSWORD=<required>
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 
@@ -104,7 +106,7 @@ RABBITMQ_DEFAULT_HOST=localhost
 RABBITMQ_PORTS_1=5672
 RABBITMQ_PORTS_2=15672
 RABBITMQ_DEFAULT_USER=core
-RABBITMQ_DEFAULT_PASS=replace-me
+RABBITMQ_DEFAULT_PASS=<required>
 RABBITMQ_DEFAULT_VHOST=/
 
 ALGORITHM=HS256
@@ -115,7 +117,7 @@ ADMINER_PORT=8080
 CELERY_DEBUG=False
 ```
 
-Do not commit real credentials.
+Do not commit real credentials or local `.env` files.
 
 ### 4. Prepare and run Django
 
@@ -127,22 +129,46 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-The isolated CI configuration can be exercised locally with:
+The isolated CI configuration can be checked locally with:
 
 ```bash
 DJANGO_SETTINGS_MODULE=core.settings_ci python manage.py check
 ```
 
-Production container-image validation is not yet part of the automated baseline, so deployment commands should be treated separately from the CI guarantees described below.
+### 5. Build and smoke-test the production image
+
+```bash
+docker build --tag datacore:local .
+docker run --rm datacore:local python -m pip check
+docker run --rm \
+  --env DJANGO_SETTINGS_MODULE=core.settings_ci \
+  datacore:local \
+  python manage.py check
+```
+
+The automated image workflow confirms that the real repository `Dockerfile` builds, uses Python 3.12, loads the native GDAL integration, passes dependency and Django checks, and excludes `.git`, `.github`, and `.env` from the final image.
+
+This image check does not yet validate the complete deployment topology, registry publication, image signing, vulnerability scanning, or production networking and secrets.
 
 ## Continuous integration
 
-The GitHub Actions workflow runs on pull requests and pushes targeting both permanent branches:
+Two complementary GitHub Actions workflows protect pull requests targeting `release` or `main`:
 
-- `release`;
-- `main`.
+1. `Django CI baseline` validates the application, migrations, service integrations, asynchronous flows, tests, and coverage.
+2. `Production Docker image` builds and smoke-tests the application container.
 
-It uses the isolated settings module:
+A normal pull request is expected to show these two primary checks:
+
+```text
+Django system, migration, test and coverage checks
+Build and smoke test production image
+```
+
+They are intentionally separate. One validates the application and service contracts; the other validates the deployable container artifact.
+
+The Django workflow runs for pull requests and pushes targeting `release` and `main`. The image workflow runs for pull requests targeting `release` or `main`, pushes to `main`, and manual executions. It intentionally skips pushes to `release` to avoid repeating a successful PR image build immediately after merge.
+
+The application checks use:
 
 ```text
 DJANGO_SETTINGS_MODULE=core.settings_ci
@@ -150,7 +176,7 @@ DJANGO_SETTINGS_MODULE=core.settings_ci
 
 ### Current CI validation
 
-The pipeline currently validates:
+The baseline currently validates:
 
 - dependency installation and consistency through `pip check`;
 - Django system checks;
@@ -160,13 +186,23 @@ The pipeline currently validates:
 - Redis connectivity and cache operations;
 - MongoDB connectivity and CRUD operations;
 - RabbitMQ authentication and AMQP connectivity through the real Celery configuration;
-- end-to-end Celery task publication, broker delivery, worker consumption, execution, and Redis marker assertion;
+- deterministic Celery task publication, broker delivery, worker execution, and Redis marker assertion;
+- an authenticated multipart CSV upload through the production API;
+- `CustomerInput` metadata persistence in PostgreSQL/PostGIS;
+- CSV persistence on the application filesystem;
+- publication and execution of the production `create_collection` Celery task;
+- dataset persistence in MongoDB GridFS;
+- propagation of `gridfs_code` back into PostgreSQL;
+- exact persisted-data assertions and cleanup of generated records, files, and GridFS objects;
 - the complete Django test suite;
 - a minimum total coverage gate of 70%;
 - publication of `coverage.xml` as a workflow artifact;
-- conditional publication of Celery worker diagnostics when the job fails.
+- conditional publication of Celery and asynchronous-flow diagnostics on failure;
+- construction of the real application Docker image;
+- Python, dependency, Django, and native GDAL smoke checks inside the image;
+- exclusion of repository metadata and local environment files from the image.
 
-The core validation commands include:
+Core validation commands include:
 
 ```bash
 python -m pip check
@@ -180,9 +216,9 @@ coverage report --show-missing --fail-under=70
 coverage xml
 ```
 
-### Celery end-to-end check
+### Celery infrastructure healthcheck
 
-The asynchronous integration check exercises this real path:
+The deterministic infrastructure check exercises:
 
 ```text
 core.settings_ci
@@ -194,9 +230,44 @@ core.settings_ci
 → exact marker assertion
 ```
 
-This provides strong regression protection for the Celery, RabbitMQ, and Redis infrastructure contract. It does not claim to validate every production business task or every application workflow.
+This gives focused regression protection for the Celery, RabbitMQ, and Redis infrastructure contract.
 
-`Upload Celery worker diagnostics` intentionally runs only after a failure. Seeing that step as `skipped` on a successful workflow is expected.
+`Upload Celery worker diagnostics` runs only after a failure. Seeing it as `skipped` on a successful workflow is expected.
+
+### Asynchronous business-flow check
+
+The application-specific test exercises:
+
+```text
+Authenticated multipart HTTP POST
+→ PostgreSQL/PostGIS metadata
+→ application file storage
+→ RabbitMQ publication
+→ separate Celery worker
+→ production create_collection task
+→ MongoDB GridFS dataset
+→ PostgreSQL gridfs_code update
+→ exact assertions and cleanup
+```
+
+This verifies a real production business contract rather than only a synthetic healthcheck. It still does not cover every task, failure mode, retry policy, or concurrency topology.
+
+### Production image check
+
+The container workflow exercises:
+
+```text
+Dockerfile
+→ python:3.12-slim-bookworm
+→ native GIS and PostgreSQL libraries
+→ requirements.txt installation
+→ pip check
+→ Django GIS/GDAL import
+→ manage.py check inside the image
+→ sensitive-path exclusion assertions
+```
+
+A successful image check means the repository can produce a runnable application image with the validated runtime and native dependencies. It does not independently certify the complete production deployment.
 
 ## Branch and release workflow
 
@@ -212,9 +283,9 @@ main
 
 - `feature/*` branches contain focused changes.
 - `release` is the integration and release-candidate branch.
-- `main` contains promoted, reviewed releases.
-- Changes merged independently into `main`, such as dependency maintenance, must be synchronized back into `release` before the next promotion to prevent permanent-branch drift.
-- CI must pass before a change is promoted between permanent branches.
+- `main` contains promoted and reviewed releases.
+- Changes integrated independently into `main` must be synchronized back into `release` before the next promotion.
+- Both application and production-image checks must pass before promotion between permanent branches.
 
 ## Technical documentation
 
@@ -224,9 +295,11 @@ Detailed CI notes are maintained in the `docs` directory:
 - [Redis integration](docs/ci-redis.md)
 - [MongoDB integration](docs/ci-mongodb.md)
 - [RabbitMQ integration](docs/ci-rabbitmq.md)
-- [Celery end-to-end integration](docs/ci-celery.md)
+- [Celery infrastructure end-to-end integration](docs/ci-celery.md)
+- [Asynchronous customer-input business flow](docs/ci-async-business-flow.md)
+- [Production Docker image validation](docs/ci-docker-image.md)
 
-These documents describe the tested architecture, settings, assertions, diagnostics, guarantees, and known scope boundaries.
+These documents describe the tested architecture, settings, assertions, diagnostics, guarantees, trigger behavior, and scope boundaries.
 
 ## Current roadmap
 
@@ -238,17 +311,19 @@ Completed:
 - [x] Redis integration checks;
 - [x] MongoDB integration checks;
 - [x] RabbitMQ connectivity through Celery configuration;
-- [x] Celery worker and task end-to-end integration;
+- [x] Celery worker and deterministic task end-to-end integration;
 - [x] dependency consistency validation;
 - [x] migration integrity checks;
 - [x] Django test suite and 70% coverage gate;
-- [x] failure diagnostics and workflow artifacts.
+- [x] failure diagnostics and workflow artifacts;
+- [x] production Docker image build and container smoke test;
+- [x] application-specific asynchronous business-flow integration test.
 
 Next:
 
-- [ ] validate the production Docker image build;
-- [ ] add an end-to-end asynchronous business-flow test that starts at an API endpoint and verifies a persisted application effect;
-- [ ] validate retries, idempotency, scheduled tasks, and production worker concurrency where required.
+- [ ] validate retries, idempotency, scheduled tasks, and production worker concurrency where required;
+- [ ] add container vulnerability scanning and SBOM generation where required;
+- [ ] add registry publishing and image signing where required.
 
 ## Diagrams
 
@@ -261,8 +336,8 @@ Next:
 3. File and user metadata are stored in PostgreSQL/PostGIS.
 4. The CSV file is persisted to the configured file storage.
 5. Celery publishes an asynchronous task through RabbitMQ.
-6. A worker extracts the data frame and stores the tabular data in MongoDB.
-7. Additional processing metadata is persisted in PostgreSQL/PostGIS.
+6. A worker extracts the data frame and stores the tabular data in MongoDB GridFS.
+7. The GridFS identifier is persisted back into PostgreSQL/PostGIS.
 
 ### Report request flow
 
@@ -273,4 +348,4 @@ Next:
 3. A Celery task is published to RabbitMQ when processing is required.
 4. A worker loads relational metadata and the corresponding MongoDB data frames.
 5. The worker performs the reporting or clustering workflow.
-6. Results and status information are persisted and returned to the user through the application flow.
+6. Results and status information are persisted and returned through the application flow.
