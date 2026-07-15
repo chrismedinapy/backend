@@ -1,7 +1,24 @@
-from data.manager.mongo_connection import MongoCollection
-from celery import shared_task
-import pandas as pd
 import numpy as np
+import pandas as pd
+from celery import shared_task
+from django.db.utils import OperationalError
+from pymongo.errors import (
+    AutoReconnect,
+    ConnectionFailure,
+    NetworkTimeout,
+    ServerSelectionTimeoutError,
+)
+
+from data.manager.mongo_connection import MongoCollection
+
+
+RETRYABLE_EXCEPTIONS = (
+    AutoReconnect,
+    ConnectionFailure,
+    NetworkTimeout,
+    OperationalError,
+    ServerSelectionTimeoutError,
+)
 
 
 class CustomerInputDataset:
@@ -21,17 +38,44 @@ class CustomerInputDataset:
                 data = df.loc[row, column]
                 if data == "":
                     df.loc[row, column] = 0
-        df_json = df.to_json(orient="split")
-        return df_json
+        return df.to_json(orient="split")
 
 
-@shared_task()
-def create_collection(customer_input_code, customer_code, url):
-    customer_input_database = CustomerInputDataset()
-    customer_input_json = customer_input_database.create_collection(
-        url, customer_input_code
-    )
-    test_collection = MongoCollection()
-    test_collection.save_customer_with_gridfs(
-        str(customer_input_json), customer_input_code
-    )
+def _is_retryable(exception):
+    """Return whether an exception chain contains a transient dependency error."""
+
+    current = exception
+    visited = set()
+    while current is not None and id(current) not in visited:
+        visited.add(id(current))
+        if isinstance(current, RETRYABLE_EXCEPTIONS):
+            return True
+        current = current.__cause__ or current.__context__
+    return False
+
+
+@shared_task(
+    bind=True,
+    acks_late=True,
+    reject_on_worker_lost=True,
+    max_retries=3,
+)
+def create_collection(self, customer_input_code, customer_code, url):
+    """Parse and persist one uploaded dataset with bounded transient retries."""
+
+    try:
+        customer_input_database = CustomerInputDataset()
+        customer_input_json = customer_input_database.create_collection(
+            url, customer_input_code
+        )
+        collection = MongoCollection()
+        gridfs_code = collection.save_customer_with_gridfs(
+            str(customer_input_json), customer_input_code
+        )
+        return str(gridfs_code)
+    except Exception as exc:
+        if not _is_retryable(exc):
+            raise
+
+        countdown = min(2 ** self.request.retries, 30)
+        raise self.retry(exc=exc, countdown=countdown) from exc
