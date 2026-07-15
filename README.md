@@ -39,7 +39,7 @@ Django REST API
     └── RabbitMQ 4                asynchronous task broker
 ```
 
-The CI workflows validate each infrastructure dependency independently, exercise the complete Celery publication and worker-execution path, and build the real application Docker image.
+The CI workflows validate each infrastructure dependency independently, exercise the Celery publication and worker-execution path, validate a real asynchronous CSV-ingestion business flow, and build the real application Docker image.
 
 ## Technology baseline
 
@@ -184,10 +184,11 @@ The workflows currently validate:
 - MongoDB connectivity and CRUD operations;
 - RabbitMQ authentication and AMQP connectivity through the real Celery configuration;
 - end-to-end Celery task publication, broker delivery, worker consumption, execution, and Redis marker assertion;
+- a real authenticated CSV-upload business flow across PostgreSQL, file storage, RabbitMQ, Celery and MongoDB GridFS;
 - the complete Django test suite;
 - a minimum total coverage gate of 70%;
 - publication of `coverage.xml` as a workflow artifact;
-- conditional publication of Celery worker diagnostics when the job fails;
+- conditional publication of Celery and business-flow diagnostics when a stage fails;
 - construction of the real application Docker image;
 - Python 3.12 and dependency verification inside the image;
 - native GDAL loading and Django system checks inside the container;
@@ -201,14 +202,15 @@ python manage.py check
 python manage.py makemigrations --dry-run --verbosity 3
 python manage.py migrate --noinput --verbosity=1
 python manage.py showmigrations --plan
+python scripts/ci/validate_async_customer_input_flow.py
 coverage run --source=core,data,middleware manage.py test --verbosity=2
 coverage report --show-missing --fail-under=70
 coverage xml
 ```
 
-### Celery end-to-end check
+### Celery infrastructure end-to-end check
 
-The asynchronous integration check exercises this real path:
+The deterministic asynchronous infrastructure check exercises this path:
 
 ```text
 core.settings_ci
@@ -220,9 +222,29 @@ core.settings_ci
 → exact marker assertion
 ```
 
-This provides strong regression protection for the Celery, RabbitMQ, and Redis infrastructure contract. It does not claim to validate every production business task or every application workflow.
+This provides focused regression protection for the Celery, RabbitMQ, and Redis infrastructure contract.
 
 `Upload Celery worker diagnostics` intentionally runs only after a failure. Seeing that step as `skipped` on a successful workflow is expected.
+
+### Asynchronous customer-input business-flow check
+
+The application-specific check exercises the real CSV-ingestion path:
+
+```text
+authenticated multipart POST
+→ CustomerInput persisted in PostgreSQL/PostGIS
+→ CSV persisted on the application filesystem
+→ production create_collection task published to RabbitMQ
+→ separate Celery worker
+→ parsed dataset persisted in MongoDB GridFS
+→ gridfs_code persisted back into PostgreSQL
+→ exact data and state assertions
+→ cleanup
+```
+
+This check uses the production endpoint, authentication, validators, business logic and Celery task. It detects regressions that the isolated infrastructure healthcheck cannot detect, including task autodiscovery, endpoint contracts, cross-database persistence and MongoDB connection configuration.
+
+`Upload asynchronous business-flow diagnostics` runs only after a failure and uploads both the worker log and the validation traceback. Seeing it as `skipped` on a successful workflow is expected.
 
 ### Production image check
 
@@ -267,7 +289,8 @@ Detailed CI notes are maintained in the `docs` directory:
 - [Redis integration](docs/ci-redis.md)
 - [MongoDB integration](docs/ci-mongodb.md)
 - [RabbitMQ integration](docs/ci-rabbitmq.md)
-- [Celery end-to-end integration](docs/ci-celery.md)
+- [Celery infrastructure end-to-end integration](docs/ci-celery.md)
+- [Asynchronous customer-input business-flow validation](docs/ci-async-business-flow.md)
 - [Production Docker image validation](docs/ci-docker-image.md)
 
 These documents describe the tested architecture, settings, assertions, diagnostics, guarantees, trigger behavior and known scope boundaries.
@@ -282,7 +305,8 @@ Completed:
 - [x] Redis integration checks;
 - [x] MongoDB integration checks;
 - [x] RabbitMQ connectivity through Celery configuration;
-- [x] Celery worker and task end-to-end integration;
+- [x] Celery worker and task infrastructure integration;
+- [x] authenticated asynchronous CSV-ingestion business-flow validation;
 - [x] dependency consistency validation;
 - [x] migration integrity checks;
 - [x] Django test suite and 70% coverage gate;
@@ -291,7 +315,6 @@ Completed:
 
 Next:
 
-- [ ] add an end-to-end asynchronous business-flow test that starts at an API endpoint and verifies a persisted application effect;
 - [ ] validate retries, idempotency, scheduled tasks, and production worker concurrency where required;
 - [ ] add container vulnerability scanning, SBOM generation, registry publishing and image signing where required.
 
