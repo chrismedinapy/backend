@@ -71,6 +71,7 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "data.utils.paginator.PageNumberPagination",
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "EXCEPTION_HANDLER": "middleware.errors.api_errors.api_exception_handler",
 }
 
 SPECTACULAR_SETTINGS = {
