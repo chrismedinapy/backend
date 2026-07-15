@@ -238,6 +238,15 @@ jobs:
           print(f"Celery task executed successfully with marker={output}")
           PY
 
+      - name: Upload Celery worker diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: celery-worker-diagnostics
+          path: /tmp/celery-worker.log
+          if-no-files-found: error
+          retention-days: 3
+
       - name: Check for missing migrations
         run: |
           python manage.py makemigrations --dry-run --verbosity 3 | tee /tmp/pending-migrations.log
