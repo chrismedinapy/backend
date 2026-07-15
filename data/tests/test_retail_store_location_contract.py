@@ -1,6 +1,5 @@
 """Regression tests for the validated retail-store location boundary."""
 
-from types import SimpleNamespace
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -8,6 +7,8 @@ from django.contrib.gis.geos import Point
 from django.test import SimpleTestCase
 
 from data.logic.retail_store import RetailStoreLogic
+from data.models.customer import Customer
+from data.utils.constant import Status
 from data.utils.exceptions import InvalidParameter
 
 
@@ -19,7 +20,12 @@ class RetailStoreLocationContractTests(SimpleTestCase):
         get_customer,
         save_retail_store,
     ):
-        customer = SimpleNamespace(customer_code=uuid4())
+        customer = Customer(
+            customer_code=uuid4(),
+            customer_name="Test customer",
+            customer_description="Test customer for relation validation",
+            status=Status.ACTIVE.value,
+        )
         point = Point(45.4545, 80.4545)
         get_customer.return_value = customer
 
@@ -33,6 +39,7 @@ class RetailStoreLocationContractTests(SimpleTestCase):
         )
 
         saved = save_retail_store.call_args.args[0]
+        self.assertIs(saved.customer, customer)
         self.assertIs(saved.retail_store_location, point)
         self.assertEqual(saved.retail_store_location.x, 45.4545)
         self.assertEqual(saved.retail_store_location.y, 80.4545)
