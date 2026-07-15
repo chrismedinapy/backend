@@ -169,6 +169,58 @@ jobs:
               )
           PY
 
+      - name: Validate end-to-end Celery task execution
+        run: |
+          set -euo pipefail
+
+          celery -A core worker \
+            --loglevel=INFO \
+            --pool=solo \
+            --concurrency=1 \
+            --without-gossip \
+            --without-mingle \
+            --without-heartbeat \
+            --include=core.ci_tasks \
+            > /tmp/celery-worker.log 2>&1 &
+          worker_pid=$!
+
+          cleanup() {
+            kill "$worker_pid" 2>/dev/null || true
+            wait "$worker_pid" 2>/dev/null || true
+            echo "===== Celery worker output ====="
+            tail -n 200 /tmp/celery-worker.log || true
+          }
+          trap cleanup EXIT
+
+          python - <<'PY'
+          import time
+
+          from core.celery import app
+
+          deadline = time.monotonic() + 20
+          while time.monotonic() < deadline:
+              replies = app.control.ping(timeout=1)
+              if replies:
+                  print(f"Celery worker is ready: {replies}")
+                  break
+              time.sleep(1)
+          else:
+              raise RuntimeError("Celery worker did not become ready")
+          PY
+
+          python - <<'PY'
+          from core.ci_tasks import ci_healthcheck
+
+          expected = {
+              "received": "celery-is-ready",
+              "status": "processed",
+          }
+          result = ci_healthcheck.delay("celery-is-ready")
+          output = result.get(timeout=20)
+          assert output == expected, f"Unexpected Celery task result: {output!r}"
+          print(f"Celery task executed successfully with result={output}")
+          PY
+
       - name: Check for missing migrations
         run: |
           python manage.py makemigrations --dry-run --verbosity 3 | tee /tmp/pending-migrations.log
