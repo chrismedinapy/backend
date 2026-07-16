@@ -16,7 +16,6 @@ import shutil
 import sys
 import time
 import uuid
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -30,7 +29,6 @@ import django
 django.setup()
 
 import gridfs
-import jwt
 from bson.objectid import ObjectId
 from django.conf import settings
 from django.contrib.gis.geos import Point
@@ -43,6 +41,7 @@ from data.models.customer import Customer
 from data.models.customer_input import CustomerInput
 from data.models.retail_store import RetailStore
 from data.models.user import User
+from data.security.tokens import issue_token_pair
 from data.task.create_customer_input_dataset import create_collection
 from data.utils.constant import Status
 from data.utils.mongo_client import get_client
@@ -52,16 +51,9 @@ TIMEOUT_SECONDS = 30
 DUPLICATE_DELIVERIES = 4
 
 
-def _create_token(user_code: uuid.UUID) -> str:
-    payload = {
-        "user_code": str(user_code),
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
-    }
-    return jwt.encode(
-        payload,
-        settings.SECRET_KEY,
-        algorithm=os.environ.get("ALGORITHM", "HS256"),
-    )
+def _create_access_token(user: User) -> str:
+    """Issue the same access token used by real login responses."""
+    return issue_token_pair(user)["access_token"]
 
 
 def main() -> None:
@@ -138,7 +130,7 @@ def main() -> None:
                 "customer_csv": uploaded_csv,
             },
             format="multipart",
-            HTTP_AUTHORIZATION=f"Bearer {_create_token(user_code)}",
+            HTTP_AUTHORIZATION=f"Bearer {_create_access_token(user)}",
             HTTP_HOST="localhost",
         )
         assert response.status_code == 201, (
