@@ -93,7 +93,7 @@ sqlparse==0.5.4
 stack-data==0.6.3
 toml==0.10.2
 tomli==2.2.1
-tornado==6.5.7
+tornado==6.5.8
 traitlets==5.14.3
 typing_extensions==4.12.2
 uritemplate==4.1.1
